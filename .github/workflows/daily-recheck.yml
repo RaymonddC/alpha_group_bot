@@ -1,0 +1,47 @@
+name: Daily FairScore Re-check
+
+# Trigger conditions
+on:
+  # Scheduled: Daily at 3 AM UTC (8 PM EST)
+  schedule:
+    - cron: '0 3 * * *'
+  # Manual trigger: Allows running the workflow from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  recheck-members:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Trigger the re-check endpoint
+      - name: Trigger Daily Member Re-check
+        run: |
+          curl -X POST \
+            ${{ secrets.BACKEND_URL }}/api/cron/recheck-members \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 300 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-max-time 60
+        continue-on-error: true
+
+      # Step 2: Notify on failure (optional)
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "Daily re-check failed. Check logs above for details."
+          exit 1
+
+# Environment notes:
+# - BACKEND_URL: Full URL to your backend (e.g., https://api.railway.app)
+# - CRON_SECRET: Secret token for authenticating cron requests (matches CRON_SECRET env var in backend)
+#
+# To set up GitHub Secrets:
+# 1. Go to your repository → Settings → Secrets and variables → Actions
+# 2. Click "New repository secret"
+# 3. Add BACKEND_URL and CRON_SECRET
+#
+# Example values:
+# BACKEND_URL=https://alpha-groups-api.railway.app
+# CRON_SECRET=your_random_secure_string_here

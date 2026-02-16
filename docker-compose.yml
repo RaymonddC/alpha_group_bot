@@ -1,0 +1,57 @@
+version: '3.8'
+
+# LOCAL DEVELOPMENT DATABASE SETUP
+# This docker-compose file provides PostgreSQL and Redis for local development
+# Production uses Supabase (PostgreSQL) and Upstash (Redis)
+# DO NOT use this in production
+
+services:
+  # PostgreSQL 15 database
+  postgres:
+    image: postgres:15-alpine
+    container_name: alpha_groups_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: alpha_groups
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist database data across container restarts
+      - postgres_data:/var/lib/postgresql/data
+      # Auto-run migrations on first startup
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alpha_groups_network
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: alpha_groups_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      # Persist Redis data (optional, can be removed for ephemeral cache)
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alpha_groups_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  alpha_groups_network:
+    driver: bridge
