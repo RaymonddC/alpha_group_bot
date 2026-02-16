@@ -1,4 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
+import crypto from 'crypto';
 import { supabase } from '../db/client';
 import { logger } from '../services/logger';
 import { sendHTMLMessage } from './rate-limiter';
@@ -343,6 +344,91 @@ Let's build a quality community! 🚀
 }
 
 /**
+ * Handle /admin command
+ */
+export async function handleAdmin(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id;
+
+  if (msg.chat.type === 'private') {
+    await sendHTMLMessage(bot, chatId, 'Use /admin in a group chat, not in private messages.');
+    return;
+  }
+
+  if (!userId) {
+    await sendHTMLMessage(bot, chatId, 'Unable to identify user. Please try again.');
+    return;
+  }
+
+  try {
+    // Check if user is a group admin
+    const member = await bot.getChatMember(chatId, userId);
+    if (member.status !== 'creator' && member.status !== 'administrator') {
+      await sendHTMLMessage(bot, chatId, 'Only group admins can use this command.');
+      return;
+    }
+
+    // Look up group
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('telegram_group_id', chatId)
+      .single();
+
+    if (groupError || !group) {
+      await sendHTMLMessage(bot, chatId, 'This group is not registered. Remove and re-add the bot.');
+      return;
+    }
+
+    // Generate token (64 hex chars)
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Insert registration token
+    const { error: insertError } = await supabase
+      .from('admin_registration_tokens')
+      .insert({
+        token,
+        telegram_user_id: userId,
+        telegram_username: msg.from?.username || null,
+        group_id: group.id,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      });
+
+    if (insertError) {
+      logger.error('Failed to create registration token', { error: insertError });
+      await sendHTMLMessage(bot, chatId, 'Failed to generate registration link. Please try again.');
+      return;
+    }
+
+    const registrationUrl = `${FRONTEND_URL}/admin/register?token=${token}`;
+    const isLocalDev = FRONTEND_URL.includes('localhost');
+
+    const message = `
+<b>Admin Registration</b>
+
+${isLocalDev ? 'Open this link in your browser to set up your admin account:' : 'Click the button below to set up your admin account.'}
+
+${isLocalDev ? `<b>Registration Link:</b>\n<code>${registrationUrl}</code>` : 'This link expires in 1 hour.'}
+    `.trim();
+
+    const options: any = {};
+    if (!isLocalDev) {
+      options.reply_markup = {
+        inline_keyboard: [
+          [{ text: 'Register as Admin', url: registrationUrl }]
+        ]
+      };
+    }
+
+    await sendHTMLMessage(bot, chatId, message, options);
+    logger.info('/admin command handled', { userId, chatId, groupId: group.id });
+  } catch (error) {
+    logger.error('Failed to handle /admin command', { userId, chatId, error });
+    await sendHTMLMessage(bot, chatId, 'An error occurred. Please try again later.');
+  }
+}
+
+/**
  * Register all command handlers
  */
 export function registerHandlers(bot: TelegramBot): void {
@@ -350,6 +436,7 @@ export function registerHandlers(bot: TelegramBot): void {
   bot.onText(/\/verify/, (msg) => handleVerify(bot, msg));
   bot.onText(/\/status/, (msg) => handleStatus(bot, msg));
   bot.onText(/\/help/, (msg) => handleHelp(bot, msg));
+  bot.onText(/\/admin/, (msg) => handleAdmin(bot, msg));
 
   bot.on('new_chat_members', (msg) => handleNewMember(bot, msg));
   bot.on('new_chat_members', (msg) => handleBotAddedToGroup(bot, msg));

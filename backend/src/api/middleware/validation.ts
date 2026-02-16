@@ -108,3 +108,10 @@ export const AnalyticsQuerySchema = z.object({
   groupId: z.string().uuid('Invalid group ID'),
   period: z.enum(['7d', '30d', '90d']).optional()
 });
+
+export const RegisterSchema = z.object({
+  token: z.string().length(64, 'Invalid registration token'),
+  name: z.string().min(1, 'Name is required').max(255),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters')
+});

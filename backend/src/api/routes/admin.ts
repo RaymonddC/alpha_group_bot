@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { supabase } from '../../db/client';
 import { logger } from '../../services/logger';
@@ -9,6 +9,7 @@ import {
   SettingsUpdateSchema,
   KickMemberSchema,
   LoginSchema,
+  RegisterSchema,
   MembersQuerySchema,
   AnalyticsQuerySchema
 } from '../middleware/validation';
@@ -79,6 +80,140 @@ router.post(
     res.json({
       success: true,
       token
+    });
+  })
+);
+
+/**
+ * GET /api/admin/register/validate
+ * Validate a registration token
+ */
+router.get(
+  '/register/validate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      res.status(400).json({ valid: false, error: 'Token is required' });
+      return;
+    }
+
+    const { data: regToken, error } = await supabase
+      .from('admin_registration_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (error || !regToken) {
+      res.status(404).json({ valid: false, error: 'Invalid token' });
+      return;
+    }
+
+    if (regToken.used_at) {
+      res.status(400).json({ valid: false, error: 'Token already used. Please log in instead.' });
+      return;
+    }
+
+    if (new Date(regToken.expires_at) < new Date()) {
+      res.status(400).json({ valid: false, error: 'Token expired. Use /admin in your group to get a new link.' });
+      return;
+    }
+
+    // Get group name
+    const { data: group } = await supabase
+      .from('groups')
+      .select('name')
+      .eq('id', regToken.group_id)
+      .single();
+
+    res.json({
+      valid: true,
+      groupName: group?.name || 'Unknown Group',
+      telegramUsername: regToken.telegram_username
+    });
+  })
+);
+
+/**
+ * POST /api/admin/register
+ * Register a new admin via onboarding token
+ */
+router.post(
+  '/register',
+  validateRequest(RegisterSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { token, name, email, password } = req.body;
+
+    // Validate token
+    const { data: regToken, error: tokenError } = await supabase
+      .from('admin_registration_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (tokenError || !regToken) {
+      res.status(404).json({ success: false, error: 'Invalid registration token' });
+      return;
+    }
+
+    if (regToken.used_at) {
+      res.status(400).json({ success: false, error: 'Token already used' });
+      return;
+    }
+
+    if (new Date(regToken.expires_at) < new Date()) {
+      res.status(400).json({ success: false, error: 'Token expired' });
+      return;
+    }
+
+    // Check if email already exists
+    const { data: existingAdmin } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    let adminId: string;
+
+    if (existingAdmin) {
+      // Link existing admin to group
+      adminId = existingAdmin.id;
+    } else {
+      // Create new admin
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      const { data: newAdmin, error: insertError } = await supabase
+        .from('admins')
+        .insert({ email, password_hash: passwordHash, name });
+
+      if (insertError || !newAdmin) {
+        res.status(500).json({ success: false, error: 'Failed to create admin account' });
+        return;
+      }
+      adminId = newAdmin.id;
+    }
+
+    // Link admin to group (ignore if already linked)
+    await supabase.from('group_admins').insert({
+      group_id: regToken.group_id,
+      admin_id: adminId,
+      role: 'admin'
+    });
+
+    // Mark token as used
+    await supabase.from('admin_registration_tokens')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', regToken.id);
+
+    // Generate JWT
+    const jwtToken = generateToken(adminId, email);
+
+    logger.info('Admin registered via onboarding', { adminId, email, groupId: regToken.group_id });
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      isExisting: !!existingAdmin
     });
   })
 );

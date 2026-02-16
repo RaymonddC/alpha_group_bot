@@ -53,6 +53,17 @@ export interface GroupAdmin {
   created_at: string;
 }
 
+export interface AdminRegistrationToken {
+  id: string;
+  token: string;
+  telegram_user_id: number;
+  telegram_username?: string;
+  group_id: string;
+  expires_at: string;
+  used_at?: string;
+  created_at: string;
+}
+
 export interface ActivityLog {
   id: string;
   member_id: string;

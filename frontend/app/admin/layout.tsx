@@ -16,7 +16,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
-    if (!token && pathname !== '/admin/login') {
+    if (!token && pathname !== '/admin/login' && pathname !== '/admin/register') {
       router.push('/admin/login');
     } else if (token) {
       setIsAuthenticated(true);
@@ -28,7 +28,7 @@ export default function AdminLayout({
     router.push('/admin/login');
   };
 
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/admin/register') {
     return <>{children}</>;
   }
 

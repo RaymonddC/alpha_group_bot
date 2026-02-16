@@ -99,3 +99,18 @@ export async function getAnalytics(period: string = '30d') {
   });
   return handleResponse(response);
 }
+
+// Admin Registration
+export async function validateRegistrationToken(token: string) {
+  const response = await fetch(`${API_URL}/api/admin/register/validate?token=${token}`);
+  return handleResponse(response);
+}
+
+export async function adminRegister(data: { token: string; name: string; email: string; password: string }) {
+  const response = await fetch(`${API_URL}/api/admin/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
