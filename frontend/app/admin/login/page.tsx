@@ -18,8 +18,9 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const { token } = await adminLogin(email, password);
+      const { token, groupId } = await adminLogin(email, password);
       localStorage.setItem('admin_token', token);
+      if (groupId) localStorage.setItem('admin_group_id', groupId);
       router.push('/admin');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');

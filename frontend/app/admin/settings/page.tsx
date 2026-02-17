@@ -20,6 +20,7 @@ export default function SettingsPage() {
   async function fetchSettings() {
     try {
       const settings = await getGroupSettings();
+      if (settings.groupId) localStorage.setItem('admin_group_id', settings.groupId);
       setBronzeThreshold(settings.bronzeThreshold);
       setSilverThreshold(settings.silverThreshold);
       setGoldThreshold(settings.goldThreshold);

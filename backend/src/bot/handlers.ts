@@ -31,6 +31,7 @@ I help manage reputation-gated communities using on-chain credentials powered by
 <b>Commands:</b>
 /verify - Verify your wallet and join
 /status - Check your current status
+/admin - Set up admin dashboard (group admins)
 /help - Get help and support
 
 Ready to get started? Use /verify! 🚀
@@ -171,6 +172,7 @@ export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message): Pr
 /start - Get started with Alpha Groups
 /verify - Verify your Solana wallet
 /status - Check your verification status
+/admin - Set up admin dashboard (group admins only)
 /help - Show this help message
 
 <b>How Verification Works:</b>

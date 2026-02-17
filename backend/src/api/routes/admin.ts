@@ -73,13 +73,22 @@ router.post(
       .update({ last_login: new Date().toISOString() })
       .eq('id', admin.id);
 
+    // Get admin's group
+    const { data: groupAdmin } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', admin.id)
+      .limit(1)
+      .single();
+
     const token = generateToken(admin.id, admin.email);
 
     logger.info('Admin logged in successfully', { adminId: admin.id });
 
     res.json({
       success: true,
-      token
+      token,
+      groupId: groupAdmin?.group_id || null
     });
   })
 );
@@ -213,6 +222,7 @@ router.post(
     res.json({
       success: true,
       token: jwtToken,
+      groupId: regToken.group_id,
       isExisting: !!existingAdmin
     });
   })
@@ -296,6 +306,51 @@ router.get(
     };
 
     res.json(response);
+  })
+);
+
+/**
+ * GET /api/admin/settings
+ * Get group settings for the authenticated admin
+ */
+router.get(
+  '/settings',
+  authenticateAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adminId = req.adminId;
+
+    // Look up admin's group
+    const { data: groupAdmin, error: gaError } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', adminId)
+      .limit(1)
+      .single();
+
+    if (gaError || !groupAdmin) {
+      res.status(404).json({ success: false, error: 'No group found for this admin' });
+      return;
+    }
+
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('id', groupAdmin.group_id)
+      .single();
+
+    if (groupError || !group) {
+      res.status(404).json({ success: false, error: 'Group not found' });
+      return;
+    }
+
+    res.json({
+      groupId: group.id,
+      groupName: group.group_name,
+      bronzeThreshold: group.bronze_threshold,
+      silverThreshold: group.silver_threshold,
+      goldThreshold: group.gold_threshold,
+      autoKickEnabled: group.auto_kick_enabled
+    });
   })
 );
 

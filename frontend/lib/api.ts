@@ -41,6 +41,10 @@ export async function adminLogin(email: string, password: string) {
   return handleResponse(response);
 }
 
+function getGroupId(): string {
+  return typeof window !== 'undefined' ? localStorage.getItem('admin_group_id') || '' : '';
+}
+
 export async function getMembers(params?: {
   page?: number;
   limit?: number;
@@ -50,6 +54,7 @@ export async function getMembers(params?: {
   sortOrder?: string;
 }) {
   const queryParams = new URLSearchParams();
+  queryParams.append('groupId', getGroupId());
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.search) queryParams.append('search', params.search);
@@ -79,7 +84,7 @@ export async function updateGroupSettings(settings: {
   const response = await fetch(`${API_URL}/api/admin/settings`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify(settings),
+    body: JSON.stringify({ ...settings, groupId: getGroupId() }),
   });
   return handleResponse(response);
 }
@@ -88,13 +93,13 @@ export async function kickMember(memberId: string) {
   const response = await fetch(`${API_URL}/api/admin/kick`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ memberId }),
+    body: JSON.stringify({ memberId, groupId: getGroupId() }),
   });
   return handleResponse(response);
 }
 
 export async function getAnalytics(period: string = '30d') {
-  const response = await fetch(`${API_URL}/api/admin/analytics?period=${period}`, {
+  const response = await fetch(`${API_URL}/api/admin/analytics?groupId=${getGroupId()}&period=${period}`, {
     headers: getAuthHeaders(),
   });
   return handleResponse(response);
