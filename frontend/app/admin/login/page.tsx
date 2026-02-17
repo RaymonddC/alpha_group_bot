@@ -18,9 +18,19 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const { token, groupId } = await adminLogin(email, password);
+      const { token, groups, groupId } = await adminLogin(email, password);
+      // Clear stale keys before storing fresh data
+      localStorage.removeItem('admin_groups');
+      localStorage.removeItem('admin_active_group');
+      localStorage.removeItem('admin_group_id');
+
       localStorage.setItem('admin_token', token);
-      if (groupId) localStorage.setItem('admin_group_id', groupId);
+      if (groups && groups.length > 0) {
+        localStorage.setItem('admin_groups', JSON.stringify(groups));
+        localStorage.setItem('admin_active_group', groups[0].id);
+      } else if (groupId) {
+        localStorage.setItem('admin_active_group', groupId);
+      }
       router.push('/admin');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');

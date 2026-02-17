@@ -24,6 +24,7 @@ function VerifyContent() {
   const { publicKey, signMessage } = useWallet();
   const searchParams = useSearchParams();
   const telegramId = searchParams.get('tid');
+  const groupId = searchParams.get('gid');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [fairscore, setFairscore] = useState<number | null>(null);
@@ -57,7 +58,8 @@ This signature is free and proves wallet ownership.`;
           telegramId,
           publicKey: publicKey.toString(),
           signature: Array.from(signature),
-          message: verifyMessage
+          message: verifyMessage,
+          ...(groupId ? { groupId } : {})
         })
       });
 
@@ -147,6 +149,14 @@ This signature is free and proves wallet ownership.`;
             <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-900/20 text-yellow-300">
               <p className="text-sm">
                 This link requires a Telegram ID. Please use the /verify command in Telegram to get your verification link.
+              </p>
+            </div>
+          )}
+
+          {telegramId && !groupId && (
+            <div className="p-4 rounded-lg border border-yellow-500/30 bg-yellow-900/20 text-yellow-300">
+              <p className="text-sm">
+                No group specified. Use /verify in a group chat to get a link tied to the correct group.
               </p>
             </div>
           )}

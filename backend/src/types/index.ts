@@ -42,6 +42,7 @@ export interface Admin {
   email: string;
   password_hash: string;
   name?: string;
+  telegram_user_id?: number;
   created_at: string;
   last_login?: string;
 }
@@ -88,6 +89,7 @@ export interface VerifyRequest {
   publicKey: string;
   signature: number[];
   message: string;
+  groupId?: string;
 }
 
 export interface VerifyResponse {

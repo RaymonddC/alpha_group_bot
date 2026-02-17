@@ -73,13 +73,22 @@ router.post(
       .update({ last_login: new Date().toISOString() })
       .eq('id', admin.id);
 
-    // Get admin's group
-    const { data: groupAdmin } = await supabase
+    // Get all groups this admin manages
+    const { data: groupAdmins } = await supabase
       .from('group_admins')
-      .select('group_id')
-      .eq('admin_id', admin.id)
-      .limit(1)
-      .single();
+      .select('group_id, groups(id, name)')
+      .eq('admin_id', admin.id);
+
+    const groups = await Promise.all(
+      (groupAdmins || []).map(async (ga: any) => {
+        const group = ga.groups;
+        const { count } = await supabase
+          .from('members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', ga.group_id);
+        return { id: group.id, name: group.name, member_count: count || 0 };
+      })
+    );
 
     const token = generateToken(admin.id, admin.email);
 
@@ -88,7 +97,8 @@ router.post(
     res.json({
       success: true,
       token,
-      groupId: groupAdmin?.group_id || null
+      groups,
+      groupId: groups[0]?.id || null
     });
   })
 );
@@ -187,13 +197,25 @@ router.post(
     if (existingAdmin) {
       // Link existing admin to group
       adminId = existingAdmin.id;
+      // Ensure telegram_user_id is set
+      if (!existingAdmin.telegram_user_id && regToken.telegram_user_id) {
+        await supabase
+          .from('admins')
+          .update({ telegram_user_id: regToken.telegram_user_id })
+          .eq('id', adminId);
+      }
     } else {
       // Create new admin
       const passwordHash = await bcrypt.hash(password, 10);
 
       const { data: newAdmin, error: insertError } = await supabase
         .from('admins')
-        .insert({ email, password_hash: passwordHash, name });
+        .insert({
+          email,
+          password_hash: passwordHash,
+          name,
+          telegram_user_id: regToken.telegram_user_id
+        });
 
       if (insertError || !newAdmin) {
         res.status(500).json({ success: false, error: 'Failed to create admin account' });
@@ -217,14 +239,68 @@ router.post(
     // Generate JWT
     const jwtToken = generateToken(adminId, email);
 
+    // Get all groups this admin manages
+    const { data: allGroupAdmins } = await supabase
+      .from('group_admins')
+      .select('group_id, groups(id, name)')
+      .eq('admin_id', adminId);
+
+    const groups = await Promise.all(
+      (allGroupAdmins || []).map(async (ga: any) => {
+        const group = ga.groups;
+        const { count } = await supabase
+          .from('members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', ga.group_id);
+        return { id: group.id, name: group.name, member_count: count || 0 };
+      })
+    );
+
     logger.info('Admin registered via onboarding', { adminId, email, groupId: regToken.group_id });
 
     res.json({
       success: true,
       token: jwtToken,
+      groups,
       groupId: regToken.group_id,
       isExisting: !!existingAdmin
     });
+  })
+);
+
+/**
+ * GET /api/admin/groups
+ * Get all groups the authenticated admin manages
+ */
+router.get(
+  '/groups',
+  authenticateAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adminId = req.adminId;
+
+    const { data: groupAdmins, error } = await supabase
+      .from('group_admins')
+      .select('group_id, groups(id, name)')
+      .eq('admin_id', adminId);
+
+    if (error) {
+      logger.error('Failed to fetch admin groups', { error });
+      res.status(500).json({ success: false, error: ERROR_MESSAGES.DATABASE_ERROR });
+      return;
+    }
+
+    const groups = await Promise.all(
+      (groupAdmins || []).map(async (ga: any) => {
+        const group = ga.groups;
+        const { count } = await supabase
+          .from('members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', ga.group_id);
+        return { id: group.id, name: group.name, member_count: count || 0 };
+      })
+    );
+
+    res.json({ success: true, groups });
   })
 );
 
@@ -318,24 +394,44 @@ router.get(
   authenticateAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const adminId = req.adminId;
+    const requestedGroupId = req.query.groupId as string | undefined;
 
-    // Look up admin's group
-    const { data: groupAdmin, error: gaError } = await supabase
-      .from('group_admins')
-      .select('group_id')
-      .eq('admin_id', adminId)
-      .limit(1)
-      .single();
+    let groupId: string;
 
-    if (gaError || !groupAdmin) {
-      res.status(404).json({ success: false, error: 'No group found for this admin' });
-      return;
+    if (requestedGroupId) {
+      // Verify admin has access to this group
+      const { data: link } = await supabase
+        .from('group_admins')
+        .select('group_id')
+        .eq('admin_id', adminId)
+        .eq('group_id', requestedGroupId)
+        .single();
+
+      if (!link) {
+        res.status(404).json({ success: false, error: 'No group found for this admin' });
+        return;
+      }
+      groupId = link.group_id;
+    } else {
+      // Fall back to first group
+      const { data: groupAdmin, error: gaError } = await supabase
+        .from('group_admins')
+        .select('group_id')
+        .eq('admin_id', adminId)
+        .limit(1)
+        .single();
+
+      if (gaError || !groupAdmin) {
+        res.status(404).json({ success: false, error: 'No group found for this admin' });
+        return;
+      }
+      groupId = groupAdmin.group_id;
     }
 
     const { data: group, error: groupError } = await supabase
       .from('groups')
       .select('*')
-      .eq('id', groupAdmin.group_id)
+      .eq('id', groupId)
       .single();
 
     if (groupError || !group) {
@@ -345,7 +441,7 @@ router.get(
 
     res.json({
       groupId: group.id,
-      groupName: group.group_name,
+      groupName: group.name,
       bronzeThreshold: group.bronze_threshold,
       silverThreshold: group.silver_threshold,
       goldThreshold: group.gold_threshold,

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { LogOut } from 'lucide-react';
+import { getAdminGroups } from '@/lib/api';
 
 export default function AdminLayout({
   children,
@@ -20,11 +21,29 @@ export default function AdminLayout({
       router.push('/admin/login');
     } else if (token) {
       setIsAuthenticated(true);
+
+      // Fetch groups if not cached
+      const cachedGroups = localStorage.getItem('admin_groups');
+      if (!cachedGroups) {
+        getAdminGroups()
+          .then(data => {
+            if (data.groups && data.groups.length > 0) {
+              localStorage.setItem('admin_groups', JSON.stringify(data.groups));
+              if (!localStorage.getItem('admin_active_group')) {
+                localStorage.setItem('admin_active_group', data.groups[0].id);
+              }
+            }
+          })
+          .catch(() => { /* ignore - user may need to re-login */ });
+      }
     }
   }, [pathname, router]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_groups');
+    localStorage.removeItem('admin_active_group');
+    localStorage.removeItem('admin_group_id');
     router.push('/admin/login');
   };
 

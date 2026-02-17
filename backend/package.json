@@ -7,7 +7,8 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "telegram",
@@ -43,8 +44,10 @@
     "@types/node": "^20.10.4",
     "@types/node-telegram-bot-api": "^0.64.13",
     "@types/pg": "^8.16.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }

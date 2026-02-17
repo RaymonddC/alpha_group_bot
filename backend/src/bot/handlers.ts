@@ -57,7 +57,23 @@ export async function handleVerify(bot: TelegramBot, msg: TelegramBot.Message): 
     return;
   }
 
-  const verificationUrl = `${FRONTEND_URL}/verify?tid=${userId}`;
+  if (msg.chat.type === 'private') {
+    await sendHTMLMessage(bot, chatId, 'Use /verify in a group chat to get your verification link.');
+    return;
+  }
+
+  // Look up group to include gid in URL
+  const { data: group } = await supabase
+    .from('groups')
+    .select('id')
+    .eq('telegram_group_id', chatId)
+    .single();
+
+  let verificationUrl = `${FRONTEND_URL}/verify?tid=${userId}`;
+  if (group) {
+    verificationUrl += `&gid=${group.id}`;
+  }
+
   const isLocalDev = FRONTEND_URL.includes('localhost');
 
   const message = `
@@ -226,12 +242,22 @@ export async function handleNewMember(
 
   if (!newMembers || newMembers.length === 0) return;
 
+  // Look up group to include gid in URL
+  const { data: group } = await supabase
+    .from('groups')
+    .select('id')
+    .eq('telegram_group_id', chatId)
+    .single();
+
   for (const member of newMembers) {
     // Skip if the new member is a bot
     if (member.is_bot) continue;
 
     const userId = member.id;
-    const verificationUrl = `${FRONTEND_URL}/verify?tid=${userId}`;
+    let verificationUrl = `${FRONTEND_URL}/verify?tid=${userId}`;
+    if (group) {
+      verificationUrl += `&gid=${group.id}`;
+    }
     const isLocalDev = FRONTEND_URL.includes('localhost');
 
     const message = `
@@ -384,46 +410,86 @@ export async function handleAdmin(bot: TelegramBot, msg: TelegramBot.Message): P
 
     const isLocalDev = FRONTEND_URL.includes('localhost');
 
-    // Check if this user already has an admin account linked to this group
-    const { data: existingLink } = await supabase
-      .from('group_admins')
-      .select('admin_id')
-      .eq('group_id', group.id)
-      .single();
+    // Check if this specific user already registered as admin for this group
+    const { data: regTokens } = await supabase
+      .from('admin_registration_tokens')
+      .select('*')
+      .eq('telegram_user_id', userId)
+      .eq('group_id', group.id);
 
-    if (existingLink) {
-      // Check if this specific telegram user is the linked admin
-      // (by checking if any admin was registered with their telegram user id)
-      const { data: regToken } = await supabase
-        .from('admin_registration_tokens')
-        .select('*')
-        .eq('telegram_user_id', userId)
-        .eq('group_id', group.id)
-        .limit(1)
-        .single();
+    const regToken = regTokens?.find((t: any) => t.used_at != null);
 
-      if (regToken && regToken.used_at) {
-        const loginUrl = `${FRONTEND_URL}/admin/login`;
-        const message = `
+    if (regToken) {
+      const loginUrl = `${FRONTEND_URL}/admin/login`;
+      const message = `
 <b>Admin Dashboard</b>
 
 You already have an admin account for this group. Log in to access your dashboard:
 
 ${isLocalDev ? `<b>Login:</b>\n<code>${loginUrl}</code>` : ''}
-        `.trim();
+      `.trim();
 
-        const options: any = {};
-        if (!isLocalDev) {
-          options.reply_markup = {
-            inline_keyboard: [
-              [{ text: 'Open Dashboard', url: loginUrl }]
-            ]
-          };
-        }
-
-        await sendHTMLMessage(bot, chatId, message, options);
-        return;
+      const options: any = {};
+      if (!isLocalDev) {
+        options.reply_markup = {
+          inline_keyboard: [
+            [{ text: 'Open Dashboard', url: loginUrl }]
+          ]
+        };
       }
+
+      await sendHTMLMessage(bot, chatId, message, options);
+      return;
+    }
+
+    // Check if this user already has an admin account (registered via another group)
+    const { data: existingAdmin } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('telegram_user_id', userId)
+      .maybeSingle();
+
+    if (existingAdmin) {
+      // Auto-link this admin to the new group
+      await supabase.from('group_admins').insert({
+        group_id: group.id,
+        admin_id: existingAdmin.id,
+        role: 'admin'
+      });
+
+      // Mark a token as used for this group so future /admin calls hit the "already registered" path
+      const autoToken = crypto.randomBytes(32).toString('hex');
+      await supabase.from('admin_registration_tokens').insert({
+        token: autoToken,
+        telegram_user_id: userId,
+        telegram_username: msg.from?.username || null,
+        group_id: group.id,
+        expires_at: new Date().toISOString(),
+        used_at: new Date().toISOString()
+      });
+
+      logger.info('Auto-linked existing admin to new group', { userId, adminId: existingAdmin.id, groupId: group.id });
+
+      const loginUrl = `${FRONTEND_URL}/admin/login`;
+      const message = `
+<b>Admin Dashboard</b>
+
+Your existing admin account has been linked to <b>${group.name}</b>. Log in to access your dashboard:
+
+${isLocalDev ? `<b>Login:</b>\n<code>${loginUrl}</code>` : ''}
+      `.trim();
+
+      const options: any = {};
+      if (!isLocalDev) {
+        options.reply_markup = {
+          inline_keyboard: [
+            [{ text: 'Open Dashboard', url: loginUrl }]
+          ]
+        };
+      }
+
+      await sendHTMLMessage(bot, chatId, message, options);
+      return;
     }
 
     // Generate token (64 hex chars)
@@ -468,7 +534,9 @@ ${isLocalDev ? `<b>Registration Link:</b>\n<code>${registrationUrl}</code>` : 'T
     await sendHTMLMessage(bot, chatId, message, options);
     logger.info('/admin command handled', { userId, chatId, groupId: group.id });
   } catch (error) {
-    logger.error('Failed to handle /admin command', { userId, chatId, error });
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Failed to handle /admin command', { userId, chatId, error: errMsg, stack: errStack });
     await sendHTMLMessage(bot, chatId, 'An error occurred. Please try again later.');
   }
 }

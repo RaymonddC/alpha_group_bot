@@ -73,7 +73,12 @@ function RegisterContent() {
       const result = await adminRegister({ token: token!, name, email, password });
       if (result.success) {
         localStorage.setItem('admin_token', result.token);
-        if (result.groupId) localStorage.setItem('admin_group_id', result.groupId);
+        if (result.groups && result.groups.length > 0) {
+          localStorage.setItem('admin_groups', JSON.stringify(result.groups));
+          localStorage.setItem('admin_active_group', result.groups[0].id);
+        } else if (result.groupId) {
+          localStorage.setItem('admin_active_group', result.groupId);
+        }
         router.push('/admin');
       } else {
         setFormError(result.error || 'Registration failed');

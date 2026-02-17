@@ -17,14 +17,15 @@ export default function SettingsPage() {
     fetchSettings();
   }, []);
 
-  async function fetchSettings() {
+  async function fetchSettings(showLoading = true) {
     try {
+      if (showLoading) setLoading(true);
       const settings = await getGroupSettings();
       if (settings.groupId) localStorage.setItem('admin_group_id', settings.groupId);
-      setBronzeThreshold(settings.bronzeThreshold);
-      setSilverThreshold(settings.silverThreshold);
-      setGoldThreshold(settings.goldThreshold);
-      setAutoKickEnabled(settings.autoKickEnabled);
+      setBronzeThreshold(settings.bronzeThreshold ?? 300);
+      setSilverThreshold(settings.silverThreshold ?? 500);
+      setGoldThreshold(settings.goldThreshold ?? 700);
+      setAutoKickEnabled(settings.autoKickEnabled ?? true);
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
@@ -49,6 +50,8 @@ export default function SettingsPage() {
         autoKickEnabled,
       });
       setMessage('Settings saved successfully!');
+      // Re-fetch to confirm the save (no loading spinner)
+      await fetchSettings(false);
     } catch (error: any) {
       setMessage(error.message || 'Failed to save settings');
     } finally {

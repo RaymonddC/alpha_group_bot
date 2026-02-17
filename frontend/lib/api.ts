@@ -32,7 +32,12 @@ export async function verifyWallet(data: {
 }
 
 // Admin API
-export async function adminLogin(email: string, password: string) {
+export async function adminLogin(email: string, password: string): Promise<{
+  success: boolean;
+  token: string;
+  groups: Array<{ id: string; name: string; member_count: number }>;
+  groupId: string | null;
+}> {
   const response = await fetch(`${API_URL}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -41,8 +46,19 @@ export async function adminLogin(email: string, password: string) {
   return handleResponse(response);
 }
 
-function getGroupId(): string {
-  return typeof window !== 'undefined' ? localStorage.getItem('admin_group_id') || '' : '';
+export function getGroupId(): string {
+  return typeof window !== 'undefined' ? localStorage.getItem('admin_active_group') || localStorage.getItem('admin_group_id') || '' : '';
+}
+
+export async function getAdminGroups(): Promise<{
+  success: boolean;
+  groups: Array<{ id: string; name: string; member_count: number }>;
+}> {
+  const response = await fetch(`${API_URL}/api/admin/groups`, {
+    headers: getAuthHeaders(),
+    cache: 'no-store',
+  });
+  return handleResponse(response);
 }
 
 export async function getMembers(params?: {
@@ -64,13 +80,17 @@ export async function getMembers(params?: {
 
   const response = await fetch(`${API_URL}/api/admin/members?${queryParams.toString()}`, {
     headers: getAuthHeaders(),
+    cache: 'no-store',
   });
   return handleResponse(response);
 }
 
 export async function getGroupSettings() {
-  const response = await fetch(`${API_URL}/api/admin/settings`, {
+  const groupId = getGroupId();
+  const query = groupId ? `?groupId=${groupId}` : '';
+  const response = await fetch(`${API_URL}/api/admin/settings${query}`, {
     headers: getAuthHeaders(),
+    cache: 'no-store',
   });
   return handleResponse(response);
 }
@@ -101,6 +121,7 @@ export async function kickMember(memberId: string) {
 export async function getAnalytics(period: string = '30d') {
   const response = await fetch(`${API_URL}/api/admin/analytics?groupId=${getGroupId()}&period=${period}`, {
     headers: getAuthHeaders(),
+    cache: 'no-store',
   });
   return handleResponse(response);
 }

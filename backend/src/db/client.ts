@@ -24,7 +24,7 @@ if (DATABASE_URL) {
 // ============================================================================
 
 interface PgChain {
-  select(columns?: string, opts?: { count?: string }): PgChain;
+  select(columns?: string, opts?: { count?: string; head?: boolean }): PgChain;
   insert(data: any): PgChain;
   update(data: any): PgChain;
   upsert(data: any, opts?: { onConflict?: string }): PgChain;
@@ -35,6 +35,7 @@ interface PgChain {
   gte(column: string, value: any): PgChain;
   lt(column: string, value: any): PgChain;
   lte(column: string, value: any): PgChain;
+  not(column: string, operator: string, value: any): PgChain;
   in(column: string, values: any[]): PgChain;
   or(filter: string): PgChain;
   ilike(column: string, pattern: string): PgChain;
@@ -42,13 +43,47 @@ interface PgChain {
   range(from: number, to: number): PgChain;
   limit(count: number): PgChain;
   single(): Promise<{ data: any; error: any; count?: number | null }>;
+  maybeSingle(): Promise<{ data: any; error: any; count?: number | null }>;
   then(resolve: (val: { data: any; error: any; count?: number | null }) => void, reject?: (err: any) => void): void;
+}
+
+/**
+ * Parse Supabase-style select columns that may include foreign key joins.
+ * E.g. "group_id, groups(id, name)" → { ownColumns: ["group_id"], joins: [{table: "groups", columns: ["id","name"], fk: "group_id"}] }
+ */
+function parseSelectColumns(_table: string, columns: string) {
+  const ownColumns: string[] = [];
+  const joins: Array<{ joinTable: string; columns: string[]; fkColumn: string }> = [];
+
+  // Match patterns like: tableName(col1, col2)
+  const joinRegex = /(\w+)\(([^)]+)\)/g;
+  let remaining = columns;
+  let match;
+
+  while ((match = joinRegex.exec(columns)) !== null) {
+    const joinTable = match[1];
+    const joinCols = match[2].split(',').map(c => c.trim());
+    // FK convention: remove trailing 's' and add '_id' (e.g. groups → group_id)
+    joins.push({ joinTable, columns: joinCols, fkColumn: `${joinTable.slice(0, -1)}_id` });
+    // Also check if fk is just table_id (e.g. groups → group_id)
+    // We'll try the common convention: remove trailing 's' and add '_id'
+    remaining = remaining.replace(match[0], '');
+  }
+
+  // Parse remaining plain columns
+  remaining.split(',').forEach(col => {
+    const trimmed = col.trim();
+    if (trimmed) ownColumns.push(trimmed);
+  });
+
+  return { ownColumns, joins };
 }
 
 function createPgChain(p: Pool, table: string): PgChain {
   let _op: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select';
   let _columns = '*';
   let _countMode = false;
+  let _headOnly = false;
   let _insertData: any = null;
   let _updateData: any = null;
   let _upsertConflict = '';
@@ -58,6 +93,8 @@ function createPgChain(p: Pool, table: string): PgChain {
   let _limitVal: number | null = null;
   let _offset: number | null = null;
   let _isSingle = false;
+  let _isMaybeSingle = false;
+  let _joins: Array<{ joinTable: string; columns: string[]; fkColumn: string }> = [];
 
   function paramIdx(): number {
     let count = 0;
@@ -66,10 +103,15 @@ function createPgChain(p: Pool, table: string): PgChain {
   }
 
   const chain: PgChain = {
-    select(columns?: string, opts?: { count?: string }) {
+    select(columns?: string, opts?: { count?: string; head?: boolean }) {
       _op = 'select';
-      if (columns) _columns = columns;
       if (opts?.count === 'exact') _countMode = true;
+      if (opts?.head) _headOnly = true;
+      if (columns && columns !== '*') {
+        const parsed = parseSelectColumns(table, columns);
+        _joins = parsed.joins;
+        _columns = parsed.ownColumns.length > 0 ? parsed.ownColumns.join(', ') : '*';
+      }
       return chain;
     },
     insert(data: any) {
@@ -120,6 +162,15 @@ function createPgChain(p: Pool, table: string): PgChain {
     lte(column: string, value: any) {
       const idx = paramIdx() + 1;
       _wheres.push({ clause: `${column} <= $${idx}`, values: [value] });
+      return chain;
+    },
+    not(column: string, operator: string, value: any) {
+      if (operator === 'is' && value === null) {
+        _wheres.push({ clause: `${column} IS NOT NULL`, values: [] });
+      } else {
+        const idx = paramIdx() + 1;
+        _wheres.push({ clause: `NOT (${column} ${operator} $${idx})`, values: [value] });
+      }
       return chain;
     },
     in(column: string, values: any[]) {
@@ -185,6 +236,10 @@ function createPgChain(p: Pool, table: string): PgChain {
       _isSingle = true;
       return execute();
     },
+    maybeSingle() {
+      _isMaybeSingle = true;
+      return execute();
+    },
     then(resolve, reject) {
       execute().then(resolve, reject);
     }
@@ -202,28 +257,84 @@ function createPgChain(p: Pool, table: string): PgChain {
 
       switch (_op) {
         case 'select': {
-          const orderClause = _orderBy ? `ORDER BY ${_orderBy} ${_orderAsc ? 'ASC' : 'DESC'}` : '';
+          const orderClause = _orderBy ? `ORDER BY ${table}.${_orderBy} ${_orderAsc ? 'ASC' : 'DESC'}` : '';
           const limitClause = _limitVal ? `LIMIT ${_limitVal}` : '';
           const offsetClause = _offset !== null ? `OFFSET ${_offset}` : '';
 
-          result = await p.query(
-            `SELECT ${_columns} FROM ${table} ${whereClause} ${orderClause} ${limitClause} ${offsetClause}`,
-            allValues
-          );
+          // Build column list with optional JOINs
+          let selectCols: string;
+          let joinClause = '';
+
+          if (_joins.length > 0) {
+            // Prefix own columns with table name
+            const ownCols = _columns === '*'
+              ? [`${table}.*`]
+              : _columns.split(',').map(c => `${table}.${c.trim()}`);
+
+            // Add join table columns as JSON aggregation
+            const joinSelects: string[] = [];
+            const joinClauses: string[] = [];
+            for (const j of _joins) {
+              const joinCols = j.columns.map(c => `'${c}', ${j.joinTable}.${c}`).join(', ');
+              joinSelects.push(`json_build_object(${joinCols}) as ${j.joinTable}`);
+              joinClauses.push(`LEFT JOIN ${j.joinTable} ON ${table}.${j.fkColumn} = ${j.joinTable}.id`);
+            }
+
+            selectCols = [...ownCols, ...joinSelects].join(', ');
+            joinClause = joinClauses.join(' ');
+          } else {
+            selectCols = _columns;
+          }
+
+          // Prefix where clause columns with table name when using joins
+          let adjustedWhereClause = whereClause;
+          if (_joins.length > 0 && whereClause) {
+            // Simple prefix: add table. before column names in WHERE
+            adjustedWhereClause = whereClause.replace(
+              /WHERE\s+/,
+              `WHERE `
+            );
+            // For each where, prefix unqualified column names
+            for (const w of _wheres) {
+              const colMatch = w.clause.match(/^(\w+)\s/);
+              if (colMatch && !colMatch[1].includes('.')) {
+                adjustedWhereClause = adjustedWhereClause.replace(
+                  w.clause,
+                  w.clause.replace(colMatch[1], `${table}.${colMatch[1]}`)
+                );
+              }
+            }
+          }
 
           let count: number | null = null;
           if (_countMode) {
             const countResult = await p.query(
-              `SELECT COUNT(*) FROM ${table} ${whereClause}`,
+              `SELECT COUNT(*) FROM ${table} ${joinClause} ${adjustedWhereClause}`,
               allValues
             );
             count = parseInt(countResult.rows[0].count);
           }
 
+          if (_headOnly) {
+            return { data: null, error: null, count };
+          }
+
+          result = await p.query(
+            `SELECT ${selectCols} FROM ${table} ${joinClause} ${adjustedWhereClause} ${orderClause} ${limitClause} ${offsetClause}`,
+            allValues
+          );
+
           if (_isSingle) {
             return {
               data: result.rows[0] || null,
               error: result.rows[0] ? null : { message: 'No rows found', code: 'PGRST116' },
+              count
+            };
+          }
+          if (_isMaybeSingle) {
+            return {
+              data: result.rows[0] || null,
+              error: null,
               count
             };
           }

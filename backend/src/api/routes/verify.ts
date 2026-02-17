@@ -33,7 +33,7 @@ router.post(
   '/verify',
   validateRequest(VerifyRequestSchema),
   asyncHandler(async (req, res) => {
-    const { telegramId, publicKey, signature, message } = req.body as VerifyRequest;
+    const { telegramId, publicKey, signature, message, groupId } = req.body as VerifyRequest;
 
     logger.info('Verification request', {
       telegramId,
@@ -74,12 +74,13 @@ router.post(
       logger.info('FairScore retrieved', { telegramId, fairscore });
 
       // 4. Determine tier based on group thresholds
-      // For MVP, use default group or first group
-      const { data: group, error: groupError } = await supabase
-        .from('groups')
-        .select('*')
-        .limit(1)
-        .single();
+      let groupQuery = supabase.from('groups').select('*');
+      if (groupId) {
+        groupQuery = groupQuery.eq('id', groupId);
+      } else {
+        groupQuery = groupQuery.limit(1);
+      }
+      const { data: group, error: groupError } = await groupQuery.single();
 
       if (groupError || !group) {
         logger.error('No group found', { error: groupError });

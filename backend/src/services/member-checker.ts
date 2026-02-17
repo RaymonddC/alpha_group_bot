@@ -19,7 +19,7 @@ export function setBotFunctions(kick: typeof kickMember, notify: typeof notifyUs
 /**
  * Calculate tier based on score and thresholds
  */
-function calculateTier(score: number, group: Group): 'gold' | 'silver' | 'bronze' | 'none' {
+export function calculateTier(score: number, group: Group): 'gold' | 'silver' | 'bronze' | 'none' {
   if (score >= group.gold_threshold) return 'gold';
   if (score >= group.silver_threshold) return 'silver';
   if (score >= group.bronze_threshold) return 'bronze';
