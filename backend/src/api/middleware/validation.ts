@@ -110,6 +110,13 @@ export const AnalyticsQuerySchema = z.object({
   period: z.enum(['7d', '30d', '90d']).optional()
 });
 
+export const ActivityLogQuerySchema = z.object({
+  groupId: z.string().uuid('Invalid group ID'),
+  action: z.string().optional(),
+  page: z.string().regex(/^\d+$/).optional(),
+  limit: z.string().regex(/^\d+$/).optional()
+});
+
 export const RegisterSchema = z.object({
   token: z.string().length(64, 'Invalid registration token'),
   name: z.string().min(1, 'Name is required').max(255),

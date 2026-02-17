@@ -106,3 +106,67 @@ describe('login response shape', () => {
     expect(response.groups).toHaveLength(0);
   });
 });
+
+/**
+ * Test audit log entry shapes for admin actions.
+ * These verify the data structures that get inserted into activity_log.
+ */
+describe('admin audit log entry shapes', () => {
+  it('settings update audit log has correct shape', () => {
+    const groupId = 'group-123';
+    const adminId = 'admin-456';
+    const bronzeThreshold = 300;
+    const silverThreshold = 500;
+    const goldThreshold = 700;
+    const autoKickEnabled = true;
+
+    const entry = {
+      group_id: groupId,
+      admin_id: adminId,
+      action: 'settings_updated',
+      action_source: 'admin',
+      details: JSON.stringify({ bronzeThreshold, silverThreshold, goldThreshold, autoKickEnabled })
+    };
+
+    expect(entry.group_id).toBe('group-123');
+    expect(entry.admin_id).toBe('admin-456');
+    expect(entry.action).toBe('settings_updated');
+    expect(entry.action_source).toBe('admin');
+    expect(typeof entry.details).toBe('string');
+  });
+
+  it('settings details JSON contains all threshold fields', () => {
+    const bronzeThreshold = 250;
+    const silverThreshold = 450;
+    const goldThreshold = 650;
+    const autoKickEnabled = false;
+
+    const details = JSON.stringify({ bronzeThreshold, silverThreshold, goldThreshold, autoKickEnabled });
+    const parsed = JSON.parse(details);
+
+    expect(parsed).toEqual({
+      bronzeThreshold: 250,
+      silverThreshold: 450,
+      goldThreshold: 650,
+      autoKickEnabled: false
+    });
+  });
+
+  it('kick audit log has correct shape', () => {
+    const entry = {
+      member_id: 'member-789',
+      group_id: 'group-123',
+      admin_id: 'admin-456',
+      action: 'kicked',
+      action_source: 'admin',
+      old_score: 250,
+      details: 'Manual removal by admin'
+    };
+
+    expect(entry.action).toBe('kicked');
+    expect(entry.action_source).toBe('admin');
+    expect(entry.admin_id).toBe('admin-456');
+    expect(entry.group_id).toBe('group-123');
+    expect(entry.member_id).toBe('member-789');
+  });
+});

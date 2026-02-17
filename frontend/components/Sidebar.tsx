@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, Settings, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, BarChart3, ClipboardList, X } from 'lucide-react';
 import GroupSelector from './GroupSelector';
 
 const navigation = [
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Members', href: '/admin/members', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'Activity Log', href: '/admin/activity', icon: ClipboardList },
 ];
 
 interface GroupInfo {
@@ -19,7 +20,11 @@ interface GroupInfo {
   member_count: number;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [groups, setGroups] = useState<GroupInfo[]>([]);
@@ -46,12 +51,22 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-64 bg-background/60 border-r border-text/10 p-6">
-      <div className="mb-6">
-        <h2 className="font-heading text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          Alpha Groups
-        </h2>
-        <p className="text-text/50 text-sm mt-1">Admin Panel</p>
+    <div className="w-64 h-full bg-background/60 border-r border-text/10 p-6">
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h2 className="font-heading text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Alpha Groups
+          </h2>
+          <p className="text-text/50 text-sm mt-1">Admin Panel</p>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden cursor-pointer p-1 text-text/50 hover:text-text transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {groups.length > 1 && (
@@ -80,6 +95,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => onClose?.()}
               className={`cursor-pointer flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? 'bg-primary/20 text-primary border border-primary/30'

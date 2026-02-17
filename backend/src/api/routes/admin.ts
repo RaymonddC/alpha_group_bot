@@ -11,7 +11,8 @@ import {
   LoginSchema,
   RegisterSchema,
   MembersQuerySchema,
-  AnalyticsQuerySchema
+  AnalyticsQuerySchema,
+  ActivityLogQuerySchema
 } from '../middleware/validation';
 import { asyncHandler } from '../middleware/error-handler';
 import {
@@ -487,6 +488,17 @@ router.post(
 
     logger.info('Settings updated successfully', { groupId });
 
+    // Fire-and-forget audit log
+    supabase.from('activity_log').insert({
+      group_id: groupId,
+      admin_id: req.adminId,
+      action: 'settings_updated',
+      action_source: 'admin',
+      details: JSON.stringify({ bronzeThreshold, silverThreshold, goldThreshold, autoKickEnabled })
+    }).then(({ error: logError }: { error: unknown }) => {
+      if (logError) logger.warn('Failed to log settings update', { logError });
+    });
+
     res.json({
       success: true,
       message: 'Settings updated successfully'
@@ -551,7 +563,10 @@ router.post(
       member_id: memberId,
       action: 'kicked',
       old_score: member.fairscore,
-      details: reason
+      details: reason,
+      admin_id: req.adminId,
+      group_id: groupId,
+      action_source: 'admin'
     });
 
     logger.info('Member kicked successfully', { memberId, groupId });
@@ -673,6 +688,107 @@ router.get(
     };
 
     res.json(response);
+  })
+);
+
+/**
+ * GET /api/admin/activity-log
+ * Get activity log entries for admin's group
+ */
+router.get(
+  '/activity-log',
+  authenticateAdmin,
+  validateQuery(ActivityLogQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const groupId = req.query.groupId as string;
+    const action = req.query.action as string | undefined;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const offset = (page - 1) * limit;
+
+    // Verify admin has access to this group
+    const { data: link } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', req.adminId)
+      .eq('group_id', groupId)
+      .single();
+
+    if (!link) {
+      res.status(403).json({ success: false, error: 'Access denied' });
+      return;
+    }
+
+    // Build query
+    let query = supabase
+      .from('activity_log')
+      .select('*')
+      .eq('group_id', groupId);
+
+    if (action) {
+      query = query.eq('action', action);
+    }
+
+    query = query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const { data: logs, error } = await query;
+
+    if (error) {
+      logger.error('Failed to fetch activity log', { error });
+      res.status(500).json({ success: false, error: 'Failed to fetch activity log' });
+      return;
+    }
+
+    // Get total count
+    let countQuery = supabase
+      .from('activity_log')
+      .select('*', { count: 'exact', head: true })
+      .eq('group_id', groupId);
+
+    if (action) {
+      countQuery = countQuery.eq('action', action);
+    }
+
+    const { count } = await countQuery;
+
+    // Fetch admin names for entries that have admin_id
+    const adminIds = [...new Set((logs || []).filter((l: any) => l.admin_id).map((l: any) => l.admin_id))];
+    let adminMap: Record<string, string> = {};
+    if (adminIds.length > 0) {
+      const { data: admins } = await supabase
+        .from('admins')
+        .select('id, name, email')
+        .in('id', adminIds);
+
+      if (admins) {
+        for (const a of admins) {
+          adminMap[a.id] = a.name || a.email;
+        }
+      }
+    }
+
+    const entries = (logs || []).map((log: any) => ({
+      id: log.id,
+      action: log.action,
+      actionSource: log.action_source || 'system',
+      adminName: log.admin_id ? (adminMap[log.admin_id] || 'Unknown Admin') : 'System',
+      details: log.details,
+      oldScore: log.old_score,
+      newScore: log.new_score,
+      oldTier: log.old_tier,
+      newTier: log.new_tier,
+      createdAt: log.created_at
+    }));
+
+    res.json({
+      success: true,
+      logs: entries,
+      total: count || 0,
+      page,
+      limit
+    });
   })
 );
 

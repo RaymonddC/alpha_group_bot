@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import TierBadge from './TierBadge';
 import { getMembers, kickMember } from '@/lib/api';
 import { formatWallet } from '@/lib/utils';
@@ -14,6 +14,8 @@ interface MemberTableProps {
 export default function MemberTable({ searchQuery, tierFilter }: MemberTableProps) {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [kickError, setKickError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
@@ -24,6 +26,7 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
 
   async function fetchMembers() {
     try {
+      setError(null);
       const data = await getMembers({
         page,
         limit: itemsPerPage,
@@ -32,8 +35,9 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
       });
       setMembers(data.members);
       setTotalPages(data.pagination.totalPages);
-    } catch (error) {
-      console.error('Error fetching members:', error);
+    } catch (err) {
+      console.error('Error fetching members:', err);
+      setError('Failed to load members. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,9 +49,10 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
     try {
       await kickMember(memberId);
       fetchMembers();
-    } catch (error) {
-      console.error('Error kicking member:', error);
-      alert('Failed to kick member');
+    } catch (err) {
+      console.error('Error kicking member:', err);
+      setKickError('Failed to kick member. Please try again.');
+      setTimeout(() => setKickError(null), 5000);
     }
   }
 
@@ -59,8 +64,32 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-red-900/20 rounded-xl p-6 border border-red-500/30 flex items-center justify-between">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-400 mr-3 flex-shrink-0" />
+          <p className="text-red-300">{error}</p>
+        </div>
+        <button
+          onClick={() => { setLoading(true); fetchMembers(); }}
+          className="cursor-pointer flex items-center px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-lg transition-all duration-200"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background/80 rounded-xl border border-text/10 overflow-hidden">
+      {kickError && (
+        <div className="mx-6 mt-4 flex items-center p-3 bg-red-900/20 rounded-lg border border-red-500/30">
+          <AlertCircle className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" />
+          <p className="text-sm text-red-300">{kickError}</p>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-text/10">
           <thead className="bg-background/60">

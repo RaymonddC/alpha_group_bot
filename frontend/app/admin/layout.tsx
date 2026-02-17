@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { getAdminGroups } from '@/lib/api';
 
 export default function AdminLayout({
@@ -14,6 +14,7 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -62,11 +63,41 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-background/80 border-b border-text/10 px-6 py-4">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Mobile top header */}
+      <header className="md:hidden bg-background/80 border-b border-text/10 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="cursor-pointer p-2 text-text/70 hover:text-text transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="font-heading text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Alpha Groups
+        </h1>
+        <div className="w-9" />
+      </header>
+
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/60"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar: mobile = fixed overlay, desktop = static in flex */}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-200 md:relative md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <Sidebar onClose={() => setSidebarOpen(false)} />
+      </div>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Desktop header */}
+        <header className="hidden md:block bg-background/80 border-b border-text/10 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="font-heading text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Admin Dashboard

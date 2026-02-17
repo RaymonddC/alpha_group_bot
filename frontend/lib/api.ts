@@ -126,6 +126,25 @@ export async function getAnalytics(period: string = '30d') {
   return handleResponse(response);
 }
 
+// Activity Log
+export async function getActivityLog(params?: {
+  action?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  queryParams.append('groupId', getGroupId());
+  if (params?.action) queryParams.append('action', params.action);
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+  const response = await fetch(`${API_URL}/api/admin/activity-log?${queryParams.toString()}`, {
+    headers: getAuthHeaders(),
+    cache: 'no-store',
+  });
+  return handleResponse(response);
+}
+
 // Admin Registration
 export async function validateRegistrationToken(token: string) {
   const response = await fetch(`${API_URL}/api/admin/register/validate?token=${token}`);

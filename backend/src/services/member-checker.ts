@@ -71,7 +71,7 @@ export async function recheckAllMembers(): Promise<RecheckSummary> {
     for (const member of members) {
       try {
         const group = member.groups as unknown as Group;
-        const oldScore = member.fairscore;
+        const oldScore = member.fairscore ?? 0;
         const oldTier = member.tier;
 
         // Get fresh FairScore
@@ -109,6 +109,8 @@ export async function recheckAllMembers(): Promise<RecheckSummary> {
           new_score: newScore,
           old_tier: oldTier,
           new_tier: newTier,
+          group_id: member.group_id,
+          action_source: 'cron',
           details: `Daily re-check: ${oldTier} → ${newTier}`
         });
 
@@ -217,7 +219,7 @@ export async function recheckMember(memberId: string): Promise<void> {
   }
 
   const group = member.groups as unknown as Group;
-  const oldScore = member.fairscore;
+  const oldScore = member.fairscore ?? 0;
   const oldTier = member.tier;
 
   // Get fresh FairScore
@@ -242,6 +244,8 @@ export async function recheckMember(memberId: string): Promise<void> {
     new_score: newScore,
     old_tier: oldTier,
     new_tier: newTier,
+    group_id: member.group_id,
+    action_source: 'admin',
     details: 'Manual re-check'
   });
 

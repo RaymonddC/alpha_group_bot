@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, TrendingUp, Award, Activity } from 'lucide-react';
+import { Users, TrendingUp, Award, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { getAnalytics } from '@/lib/api';
 
 export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -15,10 +16,12 @@ export default function AdminDashboard() {
 
   async function fetchAnalytics() {
     try {
+      setError(null);
       const data = await getAnalytics();
       setAnalytics(data);
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+      setError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -28,6 +31,30 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-text/70">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-heading text-3xl font-bold mb-2">Dashboard</h2>
+          <p className="text-text/70">Overview of your community metrics</p>
+        </div>
+        <div className="bg-red-900/20 rounded-xl p-6 border border-red-500/30 flex items-center justify-between">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-3 flex-shrink-0" />
+            <p className="text-red-300">{error}</p>
+          </div>
+          <button
+            onClick={() => { setLoading(true); fetchAnalytics(); }}
+            className="cursor-pointer flex items-center px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded-lg transition-all duration-200"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </button>
+        </div>
       </div>
     );
   }

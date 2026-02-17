@@ -96,13 +96,13 @@ export default function SettingsPage() {
                     max="500"
                     step="10"
                     value={bronzeThreshold}
-                    onChange={(e) => setBronzeThreshold(Number(e.target.value))}
+                    onChange={(e) => { setBronzeThreshold(Number(e.target.value)); setMessage(''); }}
                     className="flex-1 cursor-pointer"
                   />
                   <input
                     type="number"
                     value={bronzeThreshold}
-                    onChange={(e) => setBronzeThreshold(Number(e.target.value))}
+                    onChange={(e) => { setBronzeThreshold(Number(e.target.value)); setMessage(''); }}
                     className="w-20 px-3 py-2 bg-background border border-text/20 rounded-lg focus:border-orange-500 focus:outline-none text-text"
                   />
                 </div>
@@ -120,13 +120,13 @@ export default function SettingsPage() {
                     max="700"
                     step="10"
                     value={silverThreshold}
-                    onChange={(e) => setSilverThreshold(Number(e.target.value))}
+                    onChange={(e) => { setSilverThreshold(Number(e.target.value)); setMessage(''); }}
                     className="flex-1 cursor-pointer"
                   />
                   <input
                     type="number"
                     value={silverThreshold}
-                    onChange={(e) => setSilverThreshold(Number(e.target.value))}
+                    onChange={(e) => { setSilverThreshold(Number(e.target.value)); setMessage(''); }}
                     className="w-20 px-3 py-2 bg-background border border-text/20 rounded-lg focus:border-gray-400 focus:outline-none text-text"
                   />
                 </div>
@@ -144,13 +144,13 @@ export default function SettingsPage() {
                     max="900"
                     step="10"
                     value={goldThreshold}
-                    onChange={(e) => setGoldThreshold(Number(e.target.value))}
+                    onChange={(e) => { setGoldThreshold(Number(e.target.value)); setMessage(''); }}
                     className="flex-1 cursor-pointer"
                   />
                   <input
                     type="number"
                     value={goldThreshold}
-                    onChange={(e) => setGoldThreshold(Number(e.target.value))}
+                    onChange={(e) => { setGoldThreshold(Number(e.target.value)); setMessage(''); }}
                     className="w-20 px-3 py-2 bg-background border border-text/20 rounded-lg focus:border-yellow-400 focus:outline-none text-text"
                   />
                 </div>
@@ -168,7 +168,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <button
-                onClick={() => setAutoKickEnabled(!autoKickEnabled)}
+                onClick={() => { setAutoKickEnabled(!autoKickEnabled); setMessage(''); }}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer ${
                   autoKickEnabled ? 'bg-cta' : 'bg-text/20'
                 }`}

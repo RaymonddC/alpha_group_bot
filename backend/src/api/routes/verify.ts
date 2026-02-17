@@ -69,7 +69,7 @@ router.post(
       });
 
       // 3. Get FairScore from FairScale API
-      const fairscore = await getFairScoreWithCache(publicKey);
+      const fairscore = (await getFairScoreWithCache(publicKey)) ?? 0;
 
       logger.info('FairScore retrieved', { telegramId, fairscore });
 
