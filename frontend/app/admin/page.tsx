@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Users, TrendingUp, Award, Activity, AlertCircle, RefreshCw } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+import { DashboardSkeleton } from '@/components/Skeleton';
 import { getAnalytics } from '@/lib/api';
 
 export default function AdminDashboard() {
@@ -28,11 +29,7 @@ export default function AdminDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text/70">Loading dashboard...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Trash2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import TierBadge from './TierBadge';
+import { MemberTableSkeleton } from './Skeleton';
 import { getMembers, kickMember } from '@/lib/api';
 import { formatWallet } from '@/lib/utils';
 
@@ -57,11 +58,7 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64 bg-background/80 rounded-xl border border-text/10">
-        <p className="text-text/70">Loading members...</p>
-      </div>
-    );
+    return <MemberTableSkeleton />;
   }
 
   if (error) {

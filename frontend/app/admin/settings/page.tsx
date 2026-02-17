@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Save, AlertCircle } from 'lucide-react';
+import { SettingsSkeleton } from '@/components/Skeleton';
 import { getGroupSettings, updateGroupSettings } from '@/lib/api';
 
 export default function SettingsPage() {
@@ -60,11 +61,7 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text/70">Loading settings...</p>
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (

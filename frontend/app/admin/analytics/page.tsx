@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AnalyticsSkeleton } from '@/components/Skeleton';
 import { getAnalytics } from '@/lib/api';
 
 export default function AnalyticsPage() {
@@ -28,11 +29,7 @@ export default function AnalyticsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-text/70">Loading analytics...</p>
-      </div>
-    );
+    return <AnalyticsSkeleton />;
   }
 
   if (error) {

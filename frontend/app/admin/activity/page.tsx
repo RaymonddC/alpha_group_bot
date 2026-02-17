@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AlertCircle, RefreshCw, Settings, UserMinus, UserCheck, ArrowUpCircle, ArrowDownCircle, Search, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { ActivityLogSkeleton } from '@/components/Skeleton';
 import { getActivityLog } from '@/lib/api';
 
 interface LogEntry {
@@ -198,11 +199,7 @@ export default function ActivityLogPage() {
       )}
 
       {/* Loading */}
-      {loading && (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text/70">Loading activity log...</p>
-        </div>
-      )}
+      {loading && <ActivityLogSkeleton />}
 
       {/* Log Entries */}
       {!loading && !error && (

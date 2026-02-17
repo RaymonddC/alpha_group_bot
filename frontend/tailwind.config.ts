@@ -34,6 +34,14 @@ const config: Config = {
         lg: "0 10px 15px rgba(0,0,0,0.1)",
         xl: "0 20px 25px rgba(0,0,0,0.15)",
       },
+      animation: {
+        shimmer: "shimmer 2s infinite",
+      },
+      keyframes: {
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
     },
   },
   plugins: [],
