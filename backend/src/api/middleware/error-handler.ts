@@ -34,13 +34,18 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  // Sanitize sensitive fields before logging
+  const sanitizedBody = { ...req.body };
+  if (sanitizedBody.password) sanitizedBody.password = '[REDACTED]';
+  if (sanitizedBody.signature) sanitizedBody.signature = '[REDACTED]';
+
   // Log error with context
   logger.error('Request error', {
     error: err.message,
     stack: err.stack,
     method: req.method,
     path: req.path,
-    body: req.body,
+    body: sanitizedBody,
     query: req.query
   });
 

@@ -3,7 +3,15 @@ import jwt from 'jsonwebtoken';
 import { AuthRequest, TokenPayload, ERROR_MESSAGES } from '../../types';
 import { logger } from '../../services/logger';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_production';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
+}
+
+const JWT_SECRET: string = getJwtSecret();
 
 /**
  * JWT authentication middleware for admin routes

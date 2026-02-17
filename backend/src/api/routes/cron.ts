@@ -6,7 +6,15 @@ import { ERROR_MESSAGES } from '../../types';
 
 const router = Router();
 
-const CRON_SECRET = process.env.CRON_SECRET || 'change_this_in_production';
+function getCronSecret(): string {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    throw new Error('CRON_SECRET environment variable is required');
+  }
+  return secret;
+}
+
+const CRON_SECRET: string = getCronSecret();
 
 /**
  * POST /api/cron/recheck-members

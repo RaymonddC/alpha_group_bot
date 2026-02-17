@@ -3,9 +3,6 @@ import { generateToken, verifyToken, authenticateAdmin } from '../auth';
 import type { Response, NextFunction } from 'express';
 import type { AuthRequest } from '../../../types';
 
-// Ensure a known JWT secret for tests
-process.env.JWT_SECRET = 'test-secret-for-vitest';
-
 describe('generateToken', () => {
   it('generates a valid JWT string', () => {
     const token = generateToken('admin-123', 'admin@test.com');

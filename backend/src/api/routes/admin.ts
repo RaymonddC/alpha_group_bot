@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
 import { supabase } from '../../db/client';
 import { logger } from '../../services/logger';
 import { authenticateAdmin, generateToken } from '../middleware/auth';
@@ -24,6 +25,14 @@ import {
 
 const router = Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: { success: false, error: 'Too many login attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Note: Bot function will be imported from bot/telegram-bot.ts
 let kickMember: (userId: number, groupId: number) => Promise<void>;
 
@@ -37,6 +46,7 @@ export function setBotFunctions(kick: typeof kickMember): void {
  */
 router.post(
   '/login',
+  loginLimiter,
   validateRequest(LoginSchema),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -328,6 +338,19 @@ router.get(
     const limitNum = Math.min(parseInt(limit), 100); // Max 100 per page
     const offset = (pageNum - 1) * limitNum;
 
+    // Verify admin has access to this group
+    const { data: accessCheck } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', req.adminId)
+      .eq('group_id', groupId)
+      .single();
+
+    if (!accessCheck) {
+      res.status(403).json({ success: false, error: 'Access denied to this group' });
+      return;
+    }
+
     logger.info('Fetching members', {
       groupId,
       page: pageNum,
@@ -465,6 +488,19 @@ router.post(
 
     logger.info('Updating group settings', { groupId, adminId: req.adminId });
 
+    // Verify admin has access to this group
+    const { data: accessCheck } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', req.adminId)
+      .eq('group_id', groupId)
+      .single();
+
+    if (!accessCheck) {
+      res.status(403).json({ success: false, error: 'Access denied to this group' });
+      return;
+    }
+
     const updates: any = {};
     if (bronzeThreshold !== undefined) updates.bronze_threshold = bronzeThreshold;
     if (silverThreshold !== undefined) updates.silver_threshold = silverThreshold;
@@ -518,6 +554,19 @@ router.post(
     const { groupId, memberId, reason = 'Manual removal by admin' } = req.body;
 
     logger.info('Manual kick request', { groupId, memberId, adminId: req.adminId });
+
+    // Verify admin has access to this group
+    const { data: accessCheck } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', req.adminId)
+      .eq('group_id', groupId)
+      .single();
+
+    if (!accessCheck) {
+      res.status(403).json({ success: false, error: 'Access denied to this group' });
+      return;
+    }
 
     // Get member and group info
     const { data: member, error: memberError } = await supabase
@@ -590,6 +639,19 @@ router.get(
     const { groupId, period = '30d' } = req.query as any;
 
     logger.info('Fetching analytics', { groupId, period, adminId: req.adminId });
+
+    // Verify admin has access to this group
+    const { data: accessCheck } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', req.adminId)
+      .eq('group_id', groupId)
+      .single();
+
+    if (!accessCheck) {
+      res.status(403).json({ success: false, error: 'Access denied to this group' });
+      return;
+    }
 
     // Get all members for the group
     const { data: members, error: membersError } = await supabase
