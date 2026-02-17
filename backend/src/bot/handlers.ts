@@ -359,7 +359,7 @@ Thanks for adding me to <b>${groupName}</b>!
 Use /verify to verify your wallet and gain access!
 
 <b>For Admins:</b>
-Visit the admin dashboard to customize thresholds, view analytics, and manage members.
+Use /admin to set up the admin dashboard where you can customize thresholds, view analytics, and manage members.
 
 Let's build a quality community! 🚀
     `.trim();
