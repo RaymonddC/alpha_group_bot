@@ -382,6 +382,50 @@ export async function handleAdmin(bot: TelegramBot, msg: TelegramBot.Message): P
       return;
     }
 
+    const isLocalDev = FRONTEND_URL.includes('localhost');
+
+    // Check if this user already has an admin account linked to this group
+    const { data: existingLink } = await supabase
+      .from('group_admins')
+      .select('admin_id')
+      .eq('group_id', group.id)
+      .single();
+
+    if (existingLink) {
+      // Check if this specific telegram user is the linked admin
+      // (by checking if any admin was registered with their telegram user id)
+      const { data: regToken } = await supabase
+        .from('admin_registration_tokens')
+        .select('*')
+        .eq('telegram_user_id', userId)
+        .eq('group_id', group.id)
+        .limit(1)
+        .single();
+
+      if (regToken && regToken.used_at) {
+        const loginUrl = `${FRONTEND_URL}/admin/login`;
+        const message = `
+<b>Admin Dashboard</b>
+
+You already have an admin account for this group. Log in to access your dashboard:
+
+${isLocalDev ? `<b>Login:</b>\n<code>${loginUrl}</code>` : ''}
+        `.trim();
+
+        const options: any = {};
+        if (!isLocalDev) {
+          options.reply_markup = {
+            inline_keyboard: [
+              [{ text: 'Open Dashboard', url: loginUrl }]
+            ]
+          };
+        }
+
+        await sendHTMLMessage(bot, chatId, message, options);
+        return;
+      }
+    }
+
     // Generate token (64 hex chars)
     const token = crypto.randomBytes(32).toString('hex');
 
@@ -403,7 +447,6 @@ export async function handleAdmin(bot: TelegramBot, msg: TelegramBot.Message): P
     }
 
     const registrationUrl = `${FRONTEND_URL}/admin/register?token=${token}`;
-    const isLocalDev = FRONTEND_URL.includes('localhost');
 
     const message = `
 <b>Admin Registration</b>
