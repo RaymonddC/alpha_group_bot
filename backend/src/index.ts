@@ -209,5 +209,9 @@ async function startServer() {
   }
 }
 
-// Start the server
-startServer();
+export { app, initializeBot };
+
+// Only start when run directly (not imported by tests)
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}

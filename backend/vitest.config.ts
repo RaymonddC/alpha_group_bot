@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/__tests__/**/*.test.ts'],
     env: {
+      NODE_ENV: 'test',
       JWT_SECRET: 'test-secret-for-vitest',
       CRON_SECRET: 'test-cron-secret-for-vitest',
     },
