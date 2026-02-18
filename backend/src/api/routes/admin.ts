@@ -592,7 +592,18 @@ router.post(
       await kickMember(member.telegram_id, group.telegram_group_id);
     }
 
-    // Delete from database
+    // Log activity BEFORE delete (member_id FK must exist)
+    await supabase.from('activity_log').insert({
+      member_id: memberId,
+      action: 'kicked',
+      old_score: member.fairscore,
+      details: reason,
+      admin_id: req.adminId,
+      group_id: groupId,
+      action_source: 'admin'
+    });
+
+    // Delete from database (CASCADE will remove the activity_log entry too)
     const { error: deleteError } = await supabase
       .from('members')
       .delete()
@@ -606,17 +617,6 @@ router.post(
       });
       return;
     }
-
-    // Log activity
-    await supabase.from('activity_log').insert({
-      member_id: memberId,
-      action: 'kicked',
-      old_score: member.fairscore,
-      details: reason,
-      admin_id: req.adminId,
-      group_id: groupId,
-      action_source: 'admin'
-    });
 
     logger.info('Member kicked successfully', { memberId, groupId });
 

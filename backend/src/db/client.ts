@@ -185,30 +185,28 @@ function createPgChain(p: Pool, table: string): PgChain {
     },
     or(filter: string) {
       // Parse Supabase-style or filter: "col1.ilike.%val%,col2.ilike.%val%"
-      const parts = filter.split(',').map(part => {
+      let currentIdx = paramIdx() + 1;
+      const orParts: { clause: string; values: any[] }[] = [];
+
+      for (const part of filter.split(',')) {
         const segments = part.trim().split('.');
         if (segments.length >= 3) {
           const col = segments[0];
           const op = segments[1];
           const val = segments.slice(2).join('.');
           if (op === 'ilike') {
-            const idx = paramIdx() + 1;
-            _wheres.push({ clause: '', values: [] }); // placeholder
-            return { clause: `${col} ILIKE $${idx}`, values: [val] };
-          }
-          if (op === 'eq') {
-            const idx = paramIdx() + 1;
-            return { clause: `${col} = $${idx}`, values: [val] };
+            orParts.push({ clause: `${col} ILIKE $${currentIdx}`, values: [val] });
+            currentIdx++;
+          } else if (op === 'eq') {
+            orParts.push({ clause: `${col} = $${currentIdx}`, values: [val] });
+            currentIdx++;
           }
         }
-        return null;
-      }).filter(Boolean) as { clause: string; values: any[] }[];
+      }
 
-      if (parts.length > 0) {
-        // Remove placeholder
-        _wheres.pop();
-        const orClause = parts.map(p => p.clause).join(' OR ');
-        const orValues = parts.flatMap(p => p.values);
+      if (orParts.length > 0) {
+        const orClause = orParts.map(p => p.clause).join(' OR ');
+        const orValues = orParts.flatMap(p => p.values);
         _wheres.push({ clause: `(${orClause})`, values: orValues });
       }
       return chain;
@@ -275,8 +273,12 @@ function createPgChain(p: Pool, table: string): PgChain {
             const joinSelects: string[] = [];
             const joinClauses: string[] = [];
             for (const j of _joins) {
-              const joinCols = j.columns.map(c => `'${c}', ${j.joinTable}.${c}`).join(', ');
-              joinSelects.push(`json_build_object(${joinCols}) as ${j.joinTable}`);
+              if (j.columns.length === 1 && j.columns[0] === '*') {
+                joinSelects.push(`row_to_json(${j.joinTable}) as ${j.joinTable}`);
+              } else {
+                const joinCols = j.columns.map(c => `'${c}', ${j.joinTable}.${c}`).join(', ');
+                joinSelects.push(`json_build_object(${joinCols}) as ${j.joinTable}`);
+              }
               joinClauses.push(`LEFT JOIN ${j.joinTable} ON ${table}.${j.fkColumn} = ${j.joinTable}.id`);
             }
 
