@@ -74,13 +74,11 @@ router.post(
       logger.info('FairScore retrieved', { telegramId, fairscore });
 
       // 4. Determine tier based on group thresholds
-      let groupQuery = supabase.from('groups').select('*');
-      if (groupId) {
-        groupQuery = groupQuery.eq('id', groupId);
-      } else {
-        groupQuery = groupQuery.limit(1);
-      }
-      const { data: group, error: groupError } = await groupQuery.single();
+      const { data: group, error: groupError } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
+        .single();
 
       if (groupError || !group) {
         logger.error('No group found', { error: groupError });

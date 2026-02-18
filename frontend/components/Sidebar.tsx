@@ -44,10 +44,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
   function handleGroupChange(groupId: string) {
     setActiveGroupId(groupId);
     localStorage.setItem('admin_active_group', groupId);
-    // Reload current page to refetch data for new group
+    // Refetch data for new group via Next.js router
     router.refresh();
-    // Force re-render of page components by navigating to same path
-    window.location.reload();
   }
 
   return (

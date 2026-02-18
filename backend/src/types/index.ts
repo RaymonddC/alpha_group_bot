@@ -89,7 +89,7 @@ export interface VerifyRequest {
   publicKey: string;
   signature: number[];
   message: string;
-  groupId?: string;
+  groupId: string;
 }
 
 export interface VerifyResponse {

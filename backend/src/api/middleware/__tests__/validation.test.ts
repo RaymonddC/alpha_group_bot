@@ -14,11 +14,17 @@ describe('VerifyRequestSchema', () => {
     telegramId: '123456789',
     publicKey: 'DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy',
     signature: Array(64).fill(1),
-    message: 'A'.repeat(60)
+    message: 'A'.repeat(60),
+    groupId: '550e8400-e29b-41d4-a716-446655440000'
   };
 
   it('accepts valid payload', () => {
     expect(() => VerifyRequestSchema.parse(validPayload)).not.toThrow();
+  });
+
+  it('rejects missing groupId', () => {
+    const { groupId: _, ...noGroup } = validPayload;
+    expect(() => VerifyRequestSchema.parse(noGroup)).toThrow();
   });
 
   it('rejects non-numeric telegram ID', () => {

@@ -53,15 +53,16 @@ vi.mock('../../../bot/telegram-bot', () => ({
 import request from 'supertest';
 import { app } from '../../../index';
 
+const TEST_GROUP_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 const validVerifyBody = {
   telegramId: '123456789',
   publicKey: 'BKgzFVwNfpbvGPTtYxSJdfwE4qXWoGFCRFRWsFdTosHB',
   signature: Array(64).fill(0).map((_, i) => i % 256),
   message:
     'alpha-groups.vercel.app wants you to sign in with your Solana account:\nBKgzFVwNfpbvGPTtYxSJdfwE4qXWoGFCRFRWsFdTosHB\n\nSign in to Alpha Groups\n\nNonce: abc123xyz',
+  groupId: TEST_GROUP_ID,
 };
-
-const TEST_GROUP_ID = 'test-group-id';
 
 describe('Verify E2E', () => {
   beforeEach(() => {

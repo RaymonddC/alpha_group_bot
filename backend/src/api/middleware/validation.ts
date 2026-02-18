@@ -53,7 +53,7 @@ export const VerifyRequestSchema = z.object({
   publicKey: z.string().min(32).max(44, 'Invalid public key'),
   signature: z.array(z.number().min(0).max(255)).length(64, 'Invalid signature length'),
   message: z.string().min(50).max(1000, 'Invalid message length'),
-  groupId: z.string().uuid('Invalid group ID').optional()
+  groupId: z.string().uuid('Invalid group ID')
 });
 
 export const SettingsUpdateSchema = z.object({
@@ -115,6 +115,10 @@ export const ActivityLogQuerySchema = z.object({
   action: z.string().optional(),
   page: z.string().regex(/^\d+$/).optional(),
   limit: z.string().regex(/^\d+$/).optional()
+});
+
+export const SettingsQuerySchema = z.object({
+  groupId: z.string().uuid('Invalid group ID')
 });
 
 export const RegisterSchema = z.object({

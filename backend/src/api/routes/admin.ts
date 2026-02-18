@@ -8,6 +8,7 @@ import {
   validateRequest,
   validateQuery,
   SettingsUpdateSchema,
+  SettingsQuerySchema,
   KickMemberSchema,
   LoginSchema,
   RegisterSchema,
@@ -416,40 +417,22 @@ router.get(
 router.get(
   '/settings',
   authenticateAdmin,
+  validateQuery(SettingsQuerySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const adminId = req.adminId;
-    const requestedGroupId = req.query.groupId as string | undefined;
+    const groupId = req.query.groupId as string;
 
-    let groupId: string;
+    // Verify admin has access to this group
+    const { data: link } = await supabase
+      .from('group_admins')
+      .select('group_id')
+      .eq('admin_id', adminId)
+      .eq('group_id', groupId)
+      .single();
 
-    if (requestedGroupId) {
-      // Verify admin has access to this group
-      const { data: link } = await supabase
-        .from('group_admins')
-        .select('group_id')
-        .eq('admin_id', adminId)
-        .eq('group_id', requestedGroupId)
-        .single();
-
-      if (!link) {
-        res.status(404).json({ success: false, error: 'No group found for this admin' });
-        return;
-      }
-      groupId = link.group_id;
-    } else {
-      // Fall back to first group
-      const { data: groupAdmin, error: gaError } = await supabase
-        .from('group_admins')
-        .select('group_id')
-        .eq('admin_id', adminId)
-        .limit(1)
-        .single();
-
-      if (gaError || !groupAdmin) {
-        res.status(404).json({ success: false, error: 'No group found for this admin' });
-        return;
-      }
-      groupId = groupAdmin.group_id;
+    if (!link) {
+      res.status(404).json({ success: false, error: 'No group found for this admin' });
+      return;
     }
 
     const { data: group, error: groupError } = await supabase

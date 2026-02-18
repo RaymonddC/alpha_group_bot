@@ -119,14 +119,28 @@ export async function handleStatus(bot: TelegramBot, msg: TelegramBot.Message): 
   }
 
   try {
-    // Check if user is verified
-    const { data: member, error } = await supabase
+    // Check if user is verified — fetch ALL group memberships
+    let query = supabase
       .from('members')
       .select('*, groups(*)')
-      .eq('telegram_id', userId)
-      .single();
+      .eq('telegram_id', userId);
 
-    if (error || !member) {
+    // In a group chat, filter to that group only
+    if (msg.chat.type !== 'private') {
+      const { data: currentGroup } = await supabase
+        .from('groups')
+        .select('id')
+        .eq('telegram_group_id', chatId)
+        .single();
+
+      if (currentGroup) {
+        query = query.eq('group_id', currentGroup.id);
+      }
+    }
+
+    const { data: members, error } = await query;
+
+    if (error || !members || members.length === 0) {
       const message = `
 <b>❌ Not Verified</b>
 
@@ -140,33 +154,32 @@ Use /verify to get started!
       return;
     }
 
-    const walletShort = `${member.wallet_address.slice(0, 4)}...${member.wallet_address.slice(-4)}`;
-    const lastChecked = new Date(member.last_checked).toLocaleString('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
+    // Build status message for each group
+    const statusBlocks = members.map((member: any) => {
+      const walletShort = `${member.wallet_address.slice(0, 4)}...${member.wallet_address.slice(-4)}`;
+      const lastChecked = new Date(member.last_checked).toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      });
 
-    const message = `
-<b>✅ Verification Status</b>
+      const encouragement = member.fairscore >= member.groups.gold_threshold ? '🎉 You have the highest tier!' :
+        member.fairscore >= member.groups.silver_threshold ? '💪 Keep building reputation to reach Gold!' :
+        member.fairscore >= member.groups.bronze_threshold ? '📈 Keep going to reach Silver tier!' :
+        '⚠️ Your score is below Bronze threshold!';
 
+      return `<b>Group: ${member.groups.name}</b>
 <b>Wallet:</b> <code>${walletShort}</code>
 <b>FairScore:</b> ${member.fairscore} / 1000
 <b>Tier:</b> ${member.tier.toUpperCase()}
 <b>Last Checked:</b> ${lastChecked}
+🥉 Bronze: ${member.groups.bronze_threshold}+ | 🥈 Silver: ${member.groups.silver_threshold}+ | 🥇 Gold: ${member.groups.gold_threshold}+
+${encouragement}`;
+    });
 
-<b>Group: ${member.groups.name}</b>
-🥉 Bronze: ${member.groups.bronze_threshold}+
-🥈 Silver: ${member.groups.silver_threshold}+
-🥇 Gold: ${member.groups.gold_threshold}+
-
-${member.fairscore >= member.groups.gold_threshold ? '🎉 You have the highest tier!' :
-  member.fairscore >= member.groups.silver_threshold ? '💪 Keep building reputation to reach Gold!' :
-  member.fairscore >= member.groups.bronze_threshold ? '📈 Keep going to reach Silver tier!' :
-  '⚠️ Your score is below Bronze threshold!'}
-    `.trim();
+    const message = `<b>✅ Verification Status</b>\n\n${statusBlocks.join('\n\n')}`;
 
     await sendHTMLMessage(bot, chatId, message);
-    logger.info('/status command handled', { userId, fairscore: member.fairscore, tier: member.tier });
+    logger.info('/status command handled', { userId, groupCount: members.length });
   } catch (error) {
     logger.error('Failed to handle /status command', { userId, chatId, error });
     await sendHTMLMessage(bot, chatId, '❌ An error occurred. Please try again later.');

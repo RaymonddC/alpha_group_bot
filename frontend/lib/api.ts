@@ -22,6 +22,7 @@ export async function verifyWallet(data: {
   publicKey: string;
   signature: number[];
   message: string;
+  groupId?: string;
 }) {
   const response = await fetch(`${API_URL}/api/verify`, {
     method: 'POST',
@@ -86,9 +87,7 @@ export async function getMembers(params?: {
 }
 
 export async function getGroupSettings() {
-  const groupId = getGroupId();
-  const query = groupId ? `?groupId=${groupId}` : '';
-  const response = await fetch(`${API_URL}/api/admin/settings${query}`, {
+  const response = await fetch(`${API_URL}/api/admin/settings?groupId=${getGroupId()}`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
