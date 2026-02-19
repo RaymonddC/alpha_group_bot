@@ -102,7 +102,7 @@ This signature is free and proves wallet ownership.`;
           {publicKey && (
             <button
               onClick={handleVerify}
-              disabled={status === 'loading'}
+              disabled={status === 'loading' || !groupId}
               className="w-full py-3 px-4 bg-primary hover:bg-primary/90 text-background font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer flex items-center justify-center"
             >
               {status === 'loading' ? (

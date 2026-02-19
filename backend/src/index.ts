@@ -182,27 +182,29 @@ async function startServer() {
     await initializeBot();
 
     // Start Express server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       logger.info(`Server started on port ${PORT}`, {
         environment: process.env.NODE_ENV || 'development',
         port: PORT
       });
-      console.log(`\n🚀 Alpha Groups Backend API`);
-      console.log(`📡 Server running on http://localhost:${PORT}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-      console.log(`📝 API docs: http://localhost:${PORT}/\n`);
     });
 
     // Graceful shutdown
-    process.on('SIGTERM', () => {
-      logger.info('SIGTERM received, shutting down gracefully');
-      process.exit(0);
-    });
+    const shutdown = (signal: string) => {
+      logger.info(`${signal} received, shutting down gracefully`);
+      server.close(() => {
+        logger.info('HTTP server closed');
+        process.exit(0);
+      });
+      // Force exit after 10s if connections don't close
+      setTimeout(() => {
+        logger.warn('Forcing shutdown after timeout');
+        process.exit(1);
+      }, 10_000);
+    };
 
-    process.on('SIGINT', () => {
-      logger.info('SIGINT received, shutting down gracefully');
-      process.exit(0);
-    });
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

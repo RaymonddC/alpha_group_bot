@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const REQUEST_TIMEOUT_MS = 10_000;
 
 function getAuthHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
@@ -9,11 +10,31 @@ function getAuthHeaders() {
 }
 
 async function handleResponse(response: Response) {
+  if (response.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_groups');
+      localStorage.removeItem('admin_active_group');
+      localStorage.removeItem('admin_group_id');
+      window.location.href = '/admin/login';
+    }
+    throw new Error('Session expired. Please log in again.');
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || 'Request failed');
   }
   return response.json();
+}
+
+function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => {
+    clearTimeout(timeoutId);
+  });
 }
 
 // Public API
@@ -24,7 +45,7 @@ export async function verifyWallet(data: {
   message: string;
   groupId?: string;
 }) {
-  const response = await fetch(`${API_URL}/api/verify`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -39,7 +60,7 @@ export async function adminLogin(email: string, password: string): Promise<{
   groups: Array<{ id: string; name: string; member_count: number }>;
   groupId: string | null;
 }> {
-  const response = await fetch(`${API_URL}/api/admin/login`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -55,7 +76,7 @@ export async function getAdminGroups(): Promise<{
   success: boolean;
   groups: Array<{ id: string; name: string; member_count: number }>;
 }> {
-  const response = await fetch(`${API_URL}/api/admin/groups`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/groups`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
@@ -79,7 +100,7 @@ export async function getMembers(params?: {
   if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
   if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
-  const response = await fetch(`${API_URL}/api/admin/members?${queryParams.toString()}`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/members?${queryParams.toString()}`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
@@ -87,7 +108,7 @@ export async function getMembers(params?: {
 }
 
 export async function getGroupSettings() {
-  const response = await fetch(`${API_URL}/api/admin/settings?groupId=${getGroupId()}`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/settings?groupId=${getGroupId()}`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
@@ -100,7 +121,7 @@ export async function updateGroupSettings(settings: {
   goldThreshold: number;
   autoKickEnabled: boolean;
 }) {
-  const response = await fetch(`${API_URL}/api/admin/settings`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/settings`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ ...settings, groupId: getGroupId() }),
@@ -109,7 +130,7 @@ export async function updateGroupSettings(settings: {
 }
 
 export async function kickMember(memberId: string) {
-  const response = await fetch(`${API_URL}/api/admin/kick`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/kick`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ memberId, groupId: getGroupId() }),
@@ -118,7 +139,7 @@ export async function kickMember(memberId: string) {
 }
 
 export async function getAnalytics(period: string = '30d') {
-  const response = await fetch(`${API_URL}/api/admin/analytics?groupId=${getGroupId()}&period=${period}`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/analytics?groupId=${getGroupId()}&period=${period}`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
@@ -137,7 +158,7 @@ export async function getActivityLog(params?: {
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-  const response = await fetch(`${API_URL}/api/admin/activity-log?${queryParams.toString()}`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/activity-log?${queryParams.toString()}`, {
     headers: getAuthHeaders(),
     cache: 'no-store',
   });
@@ -146,12 +167,12 @@ export async function getActivityLog(params?: {
 
 // Admin Registration
 export async function validateRegistrationToken(token: string) {
-  const response = await fetch(`${API_URL}/api/admin/register/validate?token=${token}`);
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/register/validate?token=${token}`);
   return handleResponse(response);
 }
 
 export async function adminRegister(data: { token: string; name: string; email: string; password: string }) {
-  const response = await fetch(`${API_URL}/api/admin/register`, {
+  const response = await fetchWithTimeout(`${API_URL}/api/admin/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

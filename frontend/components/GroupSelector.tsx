@@ -37,6 +37,9 @@ export default function GroupSelector({ groups, activeGroupId, onGroupChange }: 
     <div ref={ref} className="relative mb-6">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label="Select group"
         className="cursor-pointer w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-text/10 hover:border-primary/30 bg-background/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
       >
         <div className="flex items-center min-w-0">
@@ -52,12 +55,14 @@ export default function GroupSelector({ groups, activeGroupId, onGroupChange }: 
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border border-text/10 bg-background shadow-lg overflow-hidden animate-in fade-in duration-150">
+        <div role="listbox" className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg border border-text/10 bg-background shadow-lg overflow-hidden animate-in fade-in duration-150">
           {groups.map(group => {
             const isActive = group.id === activeGroupId;
             return (
               <button
                 key={group.id}
+                role="option"
+                aria-selected={isActive}
                 onClick={() => {
                   onGroupChange(group.id);
                   setOpen(false);

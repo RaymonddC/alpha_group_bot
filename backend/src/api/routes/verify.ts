@@ -124,16 +124,23 @@ router.post(
 
       // 6. Grant or deny Telegram access
       if (tier !== 'none') {
-        // Grant access
+        // Grant access — bot failures should not fail the verification response
         if (grantTelegramAccess && notifyUser) {
-          await grantTelegramAccess(
-            parseInt(telegramId),
-            group.telegram_group_id
-          );
-          await notifyUser(
-            parseInt(telegramId),
-            `✅ Verified! Your FairScore: ${fairscore}. Tier: ${tier.toUpperCase()}`
-          );
+          try {
+            await grantTelegramAccess(
+              parseInt(telegramId),
+              group.telegram_group_id
+            );
+            await notifyUser(
+              parseInt(telegramId),
+              `✅ Verified! Your FairScore: ${fairscore}. Tier: ${tier.toUpperCase()}`
+            );
+          } catch (botError) {
+            logger.error('Bot notification failed after successful verification', {
+              telegramId,
+              error: botError
+            });
+          }
         }
 
         logger.info('Access granted', { telegramId, tier, fairscore });
@@ -148,10 +155,17 @@ router.post(
       } else {
         // Deny access
         if (notifyUser) {
-          await notifyUser(
-            parseInt(telegramId),
-            `❌ Your FairScore (${fairscore}) is below the minimum (${group.bronze_threshold})`
-          );
+          try {
+            await notifyUser(
+              parseInt(telegramId),
+              `❌ Your FairScore (${fairscore}) is below the minimum (${group.bronze_threshold})`
+            );
+          } catch (botError) {
+            logger.error('Bot denial notification failed', {
+              telegramId,
+              error: botError
+            });
+          }
         }
 
         logger.info('Access denied - score too low', {

@@ -136,6 +136,7 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => handleKick(member.id, member.telegram_username)}
+                      aria-label={`Kick @${member.telegram_username || 'unknown'}`}
                       className="cursor-pointer text-red-400 hover:text-red-300 transition-colors duration-150"
                     >
                       <Trash2 className="h-4 w-4" />

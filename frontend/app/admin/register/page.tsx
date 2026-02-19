@@ -99,7 +99,7 @@ function RegisterContent() {
   if (status === 'invalid') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-slate-800/50 border border-slate-700 rounded-xl p-8">
+        <div className="max-w-md w-full bg-background/80 border border-primary/20 rounded-2xl p-8 shadow-xl">
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="h-8 w-8 text-red-400" />
@@ -110,8 +110,8 @@ function RegisterContent() {
             <p className="text-text/70 font-body mb-6">
               {errorMessage}
             </p>
-            <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-900/20">
-              <p className="text-sm text-amber-300 font-body">
+            <div className="p-4 rounded-lg border border-primary/30 bg-primary/10">
+              <p className="text-sm text-primary font-body">
                 Request a new link by typing /admin in your group
               </p>
             </div>
@@ -132,12 +132,12 @@ function RegisterContent() {
   // Valid token — registration form
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <div className="max-w-md w-full bg-slate-800/50 border border-slate-700 rounded-xl p-8">
-        <div className="text-center mb-6">
+      <div className="max-w-md w-full space-y-8 bg-background/80 p-8 rounded-2xl border border-primary/20 shadow-xl">
+        <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="font-heading text-3xl font-bold text-primary mb-2">
+          <h2 className="font-heading text-3xl font-bold mb-2">
             Create Admin Account
           </h2>
           <p className="text-text/70 font-body">
@@ -146,7 +146,7 @@ function RegisterContent() {
         </div>
 
         {/* Group name badge */}
-        <div className="mb-6 flex justify-center">
+        <div className="flex justify-center">
           <div className="inline-flex items-center px-4 py-2 rounded-full border border-primary/50 bg-primary/10">
             <span className="text-sm text-primary font-body">
               Registering as admin for: <span className="font-semibold text-text">{groupName}</span>
@@ -157,7 +157,7 @@ function RegisterContent() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-sm text-slate-400 mb-1 font-body">
+            <label htmlFor="name" className="block text-sm font-medium mb-2 text-text/80 font-body">
               Name
             </label>
             <div className="relative">
@@ -168,7 +168,7 @@ function RegisterContent() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors duration-200 font-body"
+                className="w-full pl-10 pr-4 py-3 bg-background border border-text/20 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-text font-body"
                 placeholder="Your name"
               />
             </div>
@@ -176,7 +176,7 @@ function RegisterContent() {
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm text-slate-400 mb-1 font-body">
+            <label htmlFor="email" className="block text-sm font-medium mb-2 text-text/80 font-body">
               Email Address
             </label>
             <div className="relative">
@@ -187,7 +187,7 @@ function RegisterContent() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors duration-200 font-body"
+                className="w-full pl-10 pr-4 py-3 bg-background border border-text/20 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-text font-body"
                 placeholder="admin@example.com"
               />
             </div>
@@ -195,7 +195,7 @@ function RegisterContent() {
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm text-slate-400 mb-1 font-body">
+            <label htmlFor="password" className="block text-sm font-medium mb-2 text-text/80 font-body">
               Password
             </label>
             <div className="relative">
@@ -206,7 +206,7 @@ function RegisterContent() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors duration-200 font-body"
+                className="w-full pl-10 pr-4 py-3 bg-background border border-text/20 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-text font-body"
                 placeholder="Create a password"
               />
             </div>
@@ -214,7 +214,7 @@ function RegisterContent() {
 
           {/* Confirm Password */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm text-slate-400 mb-1 font-body">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2 text-text/80 font-body">
               Confirm Password
             </label>
             <div className="relative">
@@ -225,7 +225,7 @@ function RegisterContent() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors duration-200 font-body"
+                className="w-full pl-10 pr-4 py-3 bg-background border border-text/20 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-text font-body"
                 placeholder="Confirm your password"
               />
             </div>
@@ -243,7 +243,7 @@ function RegisterContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="cursor-pointer w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="cursor-pointer w-full py-3 px-4 bg-primary hover:bg-primary/90 text-background font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
           >
             {submitting ? (
               <>
@@ -256,7 +256,7 @@ function RegisterContent() {
           </button>
         </form>
 
-        <div className="mt-6 pt-4 border-t border-slate-700 text-center">
+        <div className="pt-4 border-t border-text/10 text-center">
           <p className="text-sm text-text/50 font-body">
             Already have an account?{' '}
             <Link

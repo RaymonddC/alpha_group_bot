@@ -1,10 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, AlertTriangle } from 'lucide-react';
 import { getAdminGroups } from '@/lib/api';
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center max-w-md">
+            <div className="mx-auto w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="h-8 w-8 text-red-400" />
+            </div>
+            <h2 className="font-heading text-xl font-bold text-text mb-2">
+              Something went wrong
+            </h2>
+            <p className="text-text/70 mb-4">
+              An unexpected error occurred. Please try refreshing the page.
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+              className="cursor-pointer px-6 py-2 bg-primary hover:bg-primary/90 text-background font-semibold rounded-lg transition-all duration-200"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function AdminLayout({
   children,
@@ -68,6 +112,7 @@ export default function AdminLayout({
       <header className="md:hidden bg-background/80 border-b border-text/10 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setSidebarOpen(true)}
+          aria-label="Open navigation menu"
           className="cursor-pointer p-2 text-text/70 hover:text-text transition-colors"
         >
           <Menu className="h-5 w-5" />
@@ -114,7 +159,9 @@ export default function AdminLayout({
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
