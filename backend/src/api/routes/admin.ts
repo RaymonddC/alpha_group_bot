@@ -696,7 +696,7 @@ router.get(
     // Group activities by date and action
     const activityMap = new Map<string, any>();
     activities?.forEach((activity: any) => {
-      const date = activity.created_at.split('T')[0];
+      const date = new Date(activity.created_at).toISOString().split('T')[0];
       if (!activityMap.has(date)) {
         activityMap.set(date, { date, verified: 0, promoted: 0, demoted: 0, kicked: 0 });
       }
@@ -767,7 +767,7 @@ router.get(
     // Build query
     let query = supabase
       .from('activity_log')
-      .select('*')
+      .select('*, members(telegram_username, telegram_id)')
       .eq('group_id', groupId);
 
     if (action) {
@@ -819,6 +819,7 @@ router.get(
       action: log.action,
       actionSource: log.action_source || 'system',
       adminName: log.admin_id ? (adminMap[log.admin_id] || 'Unknown Admin') : 'System',
+      memberUsername: log.members?.telegram_username || null,
       details: log.details,
       oldScore: log.old_score,
       newScore: log.new_score,

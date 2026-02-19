@@ -10,6 +10,7 @@ interface LogEntry {
   action: string;
   actionSource: string;
   adminName: string;
+  memberUsername: string | null;
   details: string | null;
   oldScore: number | null;
   newScore: number | null;
@@ -224,11 +225,16 @@ export default function ActivityLogPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-wrap">
                       <span className="font-medium text-text">
                         {getActionLabel(entry.action)}
                       </span>
-                      <span className="text-sm text-text/50">
+                      {entry.memberUsername && (
+                        <span className="text-sm font-mono text-primary">
+                          @{entry.memberUsername}
+                        </span>
+                      )}
+                      <span className="text-sm text-text/40">
                         by {entry.adminName}
                       </span>
                     </div>

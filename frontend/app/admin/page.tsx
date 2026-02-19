@@ -123,27 +123,52 @@ export default function AdminDashboard() {
       {/* Recent Activity */}
       <div className="bg-background/80 rounded-xl p-6 border border-text/10">
         <h3 className="font-heading text-xl font-semibold mb-4">Recent Activity</h3>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
-            analytics.recentActivity.slice(0, 10).map((activity: any, index: number) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-background/50 rounded-lg border border-text/5 hover:border-text/10 transition-all duration-200"
-              >
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-cta rounded-full mr-3"></div>
-                  <div>
-                    <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-text/60">
-                      {new Date(activity.date).toLocaleDateString()}
-                    </p>
+            analytics.recentActivity.slice(0, 10).map((activity: any, index: number) => {
+              const total = (activity.verified || 0) + (activity.promoted || 0) + (activity.demoted || 0) + (activity.kicked || 0);
+              const date = new Date(activity.date + 'T00:00:00');
+              const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              return (
+                <div
+                  key={index}
+                  className="flex items-center justify-between px-4 py-3 bg-background/50 rounded-lg border border-text/5 hover:border-text/10 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0" />
+                    <span className="text-sm font-medium text-text/80 w-28">{label}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {activity.verified > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                          +{activity.verified} verified
+                        </span>
+                      )}
+                      {activity.promoted > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-cta/10 text-cta border border-cta/20">
+                          ↑{activity.promoted} promoted
+                        </span>
+                      )}
+                      {activity.demoted > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                          ↓{activity.demoted} demoted
+                        </span>
+                      )}
+                      {activity.kicked > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                          ✕{activity.kicked} kicked
+                        </span>
+                      )}
+                      {total === 0 && (
+                        <span className="text-xs text-text/30">no events</span>
+                      )}
+                    </div>
                   </div>
+                  <span className="text-sm font-semibold text-text/50 flex-shrink-0 ml-2">
+                    {total} {total === 1 ? 'event' : 'events'}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-text/70">Count: {activity.count || activity.verified || 0}</p>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className="text-text/60 text-center py-8">No recent activity</p>
           )}
