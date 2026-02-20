@@ -38,6 +38,12 @@ RUN npm ci --only=production --legacy-peer-deps
 # Copy compiled JavaScript from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Copy migration files and runner
+COPY migrations ./migrations
+COPY scripts/migrate.js ./scripts/migrate.js
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
@@ -47,24 +53,8 @@ USER nodejs
 EXPOSE 3001
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-# Start application
-CMD ["node", "dist/index.js"]
-
-# ============================================================================
-# Build notes:
-# - Uses multi-stage build to minimize final image size
-# - Alpine Linux for small footprint
-# - Non-root user for security
-# - Health check for container orchestration
-#
-# Build command:
-# docker build -t alpha-groups:latest .
-#
-# Run command (local development):
-# docker run -p 3001:3001 --env-file .env alpha-groups:latest
-#
-# Run with docker-compose:
-# docker-compose up -d backend
+# Run migrations then start server
+CMD ["sh", "./entrypoint.sh"]
