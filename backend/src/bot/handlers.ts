@@ -192,52 +192,54 @@ ${encouragement}`;
 export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
   const chatId = msg.chat.id;
   const userId = msg.from?.id;
+  const isPrivate = msg.chat.type === 'private';
 
-  const message = `
-<b>📚 Help & Commands</b>
+  const memberMessage = `
+<b>📚 Alpha Groups — Help</b>
 
-<b>Available Commands:</b>
+<b>Member commands:</b>
+/verify — connect your Solana wallet and join
+/status — check your FairScore and current tier
+/help — show this message
 
-/start - Get started with Alpha Groups
-/verify - Verify your Solana wallet
-/status - Check your verification status
-/admin - Set up admin dashboard (group admins only)
-/help - Show this help message
-
-<b>How Verification Works:</b>
-
+<b>How it works:</b>
 1. Use /verify to get a verification link
-2. Click the link and connect your Solana wallet
-3. Sign a message (free, no gas fees!)
-4. We check your FairScore (0-1000)
-5. If you meet the threshold, you get access!
+2. Connect your wallet and sign a message (free, no gas)
+3. We check your FairScore (0–1000) via FairScale
+4. If you meet the group threshold, you're in
 
-<b>About FairScore:</b>
+<b>Tiers:</b>
+🥉 Bronze — entry level (typically 300+)
+🥈 Silver — trusted member (typically 500+)
+🥇 Gold — elite access (typically 700+)
 
-FairScore is a reputation rating (0-1000) based on your on-chain activity on Solana. It measures:
-• Transaction history quality
-• NFT holdings and activity
-• DeFi participation
-• Community involvement
-• And more!
+Scores re-check daily. Your tier updates automatically.
+  `.trim();
 
-<b>About Tiers:</b>
+  const adminMessage = `
+<b>📚 Alpha Groups — Admin Help</b>
 
-Groups have three tiers with different reputation thresholds:
-🥉 <b>Bronze</b> - Entry level (typically 300+)
-🥈 <b>Silver</b> - Regular members (typically 500+)
-🥇 <b>Gold</b> - Trusted members (typically 700+)
+<b>Admin commands:</b>
+/admin — open admin setup or get dashboard link
+/help — show this message
 
-Your tier is automatically updated daily based on your current FairScore.
+<b>Dashboard features:</b>
+• Set custom tier thresholds (Bronze / Silver / Gold)
+• View members, FairScores, and tiers
+• Manually kick members
+• View analytics and activity log
+• Enable or disable auto-kick on score drop
 
-<b>Need More Help?</b>
+<b>Member commands (also available in group):</b>
+/verify — wallet verification
+/status — score and tier check
 
-Visit our website or contact the group admin.
+<a href="${FRONTEND_URL}/admin/login">Open Admin Dashboard →</a>
   `.trim();
 
   try {
-    await sendHTMLMessage(bot, chatId, message);
-    logger.info('/help command handled', { userId, chatId });
+    await sendHTMLMessage(bot, chatId, isPrivate ? adminMessage : memberMessage);
+    logger.info('/help command handled', { userId, chatId, context: isPrivate ? 'private' : 'group' });
   } catch (error) {
     logger.error('Failed to handle /help command', { userId, chatId, error });
   }
@@ -350,34 +352,31 @@ export async function handleBotAddedToGroup(
       }
     }
 
-    const message = `
-<b>🤖 Alpha Groups Bot Activated!</b>
+    const introMessage = `
+🔐 <b>Alpha Groups is now active in ${groupName}.</b>
 
-Thanks for adding me to <b>${groupName}</b>!
+Access is reputation-gated. Connect your Solana wallet to verify your on-chain credentials via FairScale.
 
-<b>I help manage reputation-gated communities using FairScale.</b>
-
-<b>What I do:</b>
-✅ Verify members' Solana wallets
-✅ Check FairScore (on-chain reputation)
-✅ Automatically manage access based on reputation
-✅ Daily re-checks and tier adjustments
-
-<b>Default Settings:</b>
-🥉 Bronze: 300+ FairScore
-🥈 Silver: 500+ FairScore
-🥇 Gold: 700+ FairScore
-
-<b>For Members:</b>
-Use /verify to verify your wallet and gain access!
-
-<b>For Admins:</b>
-Use /admin to set up the admin dashboard where you can customize thresholds, view analytics, and manage members.
-
-Let's build a quality community! 🚀
+/verify — join the group
+/admin — set up your dashboard (admins)
+/help — see all commands
     `.trim();
 
-    await sendHTMLMessage(bot, chatId, message);
+    const setupMessage = `
+📌 <b>Setup Guide</b> — Admins, consider pinning this.
+
+<b>Default access tiers</b> (configurable via /admin):
+🥉 Bronze  300+ FairScore
+🥈 Silver  500+ FairScore
+🥇 Gold    700+ FairScore
+
+Members below the minimum threshold are removed automatically. Scores re-check daily — tier changes trigger Telegram notifications.
+
+Admins: customise thresholds, view analytics, and manage members via the dashboard.
+    `.trim();
+
+    await sendHTMLMessage(bot, chatId, introMessage);
+    await sendHTMLMessage(bot, chatId, setupMessage);
     logger.info('Bot added to group message sent', { chatId, groupName });
   } catch (error) {
     logger.error('Failed to handle bot added to group', { chatId, groupName, error });
