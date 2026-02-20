@@ -19,7 +19,11 @@ if (!DATABASE_URL) {
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
 async function runMigrations() {
-  const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  const client = new Client({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10000,
+  });
 
   try {
     await client.connect();
@@ -80,6 +84,7 @@ async function runMigrations() {
 }
 
 runMigrations().catch(err => {
-  console.error('Migration failed:', err.message);
+  console.error('Migration failed:', err.message || err.code || JSON.stringify(err));
+  console.error('Full error:', err);
   process.exit(1);
 });
