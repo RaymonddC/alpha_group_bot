@@ -16,7 +16,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const MIGRATIONS_DIR = path.join(__dirname, '..', 'backend', 'migrations');
+const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 
 async function runMigrations() {
   const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
