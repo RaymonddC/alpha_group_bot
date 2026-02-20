@@ -98,26 +98,43 @@ export default function AdminDashboard() {
       {/* Tier Distribution */}
       <div className="bg-background/80 rounded-xl p-6 border border-text/10">
         <h3 className="font-heading text-xl font-semibold mb-4">Tier Distribution</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-orange-900/20 rounded-lg p-4 border border-orange-600/30">
-            <p className="text-sm text-text/70 mb-1">Bronze Tier</p>
-            <p className="text-3xl font-bold text-orange-400">
-              {analytics?.tierDistribution?.bronze || 0}
-            </p>
-          </div>
-          <div className="bg-gray-700/20 rounded-lg p-4 border border-gray-400/30">
-            <p className="text-sm text-text/70 mb-1">Silver Tier</p>
-            <p className="text-3xl font-bold text-gray-300">
-              {analytics?.tierDistribution?.silver || 0}
-            </p>
-          </div>
-          <div className="bg-yellow-700/20 rounded-lg p-4 border border-yellow-400/30">
-            <p className="text-sm text-text/70 mb-1">Gold Tier</p>
-            <p className="text-3xl font-bold text-yellow-300">
-              {analytics?.tierDistribution?.gold || 0}
-            </p>
-          </div>
-        </div>
+        {(() => {
+          const totalMembers = analytics?.totalMembers || 1;
+          const bronze = analytics?.tierDistribution?.bronze || 0;
+          const silver = analytics?.tierDistribution?.silver || 0;
+          const gold = analytics?.tierDistribution?.gold || 0;
+          const bronzePct = Math.round((bronze / totalMembers) * 100);
+          const silverPct = Math.round((silver / totalMembers) * 100);
+          const goldPct = Math.round((gold / totalMembers) * 100);
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-orange-900/20 rounded-lg p-4 border border-orange-600/30">
+                <p className="text-sm text-text/70 mb-1">Bronze Tier</p>
+                <p className="text-3xl font-bold text-orange-400">{bronze}</p>
+                <p className="text-xs text-text/50 mt-1">{bronze} {bronze === 1 ? 'member' : 'members'} · {bronzePct}%</p>
+                <div className="mt-2 h-1.5 rounded-full bg-text/10">
+                  <div className="h-1.5 rounded-full bg-orange-400" style={{ width: `${bronzePct}%` }} />
+                </div>
+              </div>
+              <div className="bg-gray-700/20 rounded-lg p-4 border border-gray-400/30">
+                <p className="text-sm text-text/70 mb-1">Silver Tier</p>
+                <p className="text-3xl font-bold text-gray-300">{silver}</p>
+                <p className="text-xs text-text/50 mt-1">{silver} {silver === 1 ? 'member' : 'members'} · {silverPct}%</p>
+                <div className="mt-2 h-1.5 rounded-full bg-text/10">
+                  <div className="h-1.5 rounded-full bg-gray-400" style={{ width: `${silverPct}%` }} />
+                </div>
+              </div>
+              <div className="bg-yellow-700/20 rounded-lg p-4 border border-yellow-400/30">
+                <p className="text-sm text-text/70 mb-1">Gold Tier</p>
+                <p className="text-3xl font-bold text-yellow-300">{gold}</p>
+                <p className="text-xs text-text/50 mt-1">{gold} {gold === 1 ? 'member' : 'members'} · {goldPct}%</p>
+                <div className="mt-2 h-1.5 rounded-full bg-text/10">
+                  <div className="h-1.5 rounded-full bg-yellow-400" style={{ width: `${goldPct}%` }} />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Recent Activity */}

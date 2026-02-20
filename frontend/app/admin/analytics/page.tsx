@@ -82,7 +82,11 @@ export default function AnalyticsPage() {
                 contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '8px' }}
                 labelStyle={{ color: '#F8FAFC' }}
               />
-              <Bar dataKey="count" fill="#F59E0B" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                {(analytics.scoreDistribution as any[]).map((_entry: any, index: number) => (
+                  <Cell key={`bar-${index}`} fill={['#F87171', '#FB923C', '#CD7F32', '#94A3B8', '#F59E0B'][index] || '#F59E0B'} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -125,11 +129,11 @@ export default function AnalyticsPage() {
         <div className="bg-background/80 rounded-xl p-6 border border-text/10">
           <h3 className="font-heading text-xl font-semibold mb-4">Member Growth</h3>
           {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={analytics.recentActivity.slice().reverse()}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="date" stroke="#F8FAFC" />
-                <YAxis stroke="#F8FAFC" />
+                <YAxis stroke="#F8FAFC" allowDecimals={false} domain={[0, 'auto']} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '8px' }}
                   labelStyle={{ color: '#F8FAFC' }}

@@ -10,9 +10,16 @@ export default function SettingsPage() {
   const [silverThreshold, setSilverThreshold] = useState(500);
   const [goldThreshold, setGoldThreshold] = useState(700);
   const [autoKickEnabled, setAutoKickEnabled] = useState(true);
+  const [savedState, setSavedState] = useState({ bronze: 300, silver: 500, gold: 700, autoKick: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  const hasUnsavedChanges =
+    bronzeThreshold !== savedState.bronze ||
+    silverThreshold !== savedState.silver ||
+    goldThreshold !== savedState.gold ||
+    autoKickEnabled !== savedState.autoKick;
 
   useEffect(() => {
     fetchSettings();
@@ -23,10 +30,15 @@ export default function SettingsPage() {
       if (showLoading) setLoading(true);
       const settings = await getGroupSettings();
       if (settings.groupId) localStorage.setItem('admin_group_id', settings.groupId);
-      setBronzeThreshold(settings.bronzeThreshold ?? 300);
-      setSilverThreshold(settings.silverThreshold ?? 500);
-      setGoldThreshold(settings.goldThreshold ?? 700);
-      setAutoKickEnabled(settings.autoKickEnabled ?? true);
+      const bronze = settings.bronzeThreshold ?? 300;
+      const silver = settings.silverThreshold ?? 500;
+      const gold = settings.goldThreshold ?? 700;
+      const autoKick = settings.autoKickEnabled ?? true;
+      setBronzeThreshold(bronze);
+      setSilverThreshold(silver);
+      setGoldThreshold(gold);
+      setAutoKickEnabled(autoKick);
+      setSavedState({ bronze, silver, gold, autoKick });
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
@@ -50,6 +62,7 @@ export default function SettingsPage() {
         goldThreshold,
         autoKickEnabled,
       });
+      setSavedState({ bronze: bronzeThreshold, silver: silverThreshold, gold: goldThreshold, autoKick: autoKickEnabled });
       setMessage('Settings saved successfully!');
       // Re-fetch to confirm the save (no loading spinner)
       await fetchSettings(false);
@@ -94,7 +107,7 @@ export default function SettingsPage() {
                     step="10"
                     value={bronzeThreshold}
                     onChange={(e) => { setBronzeThreshold(Number(e.target.value)); setMessage(''); }}
-                    className="flex-1 cursor-pointer"
+                    className="flex-1 cursor-pointer accent-orange-400"
                   />
                   <input
                     type="number"
@@ -118,7 +131,7 @@ export default function SettingsPage() {
                     step="10"
                     value={silverThreshold}
                     onChange={(e) => { setSilverThreshold(Number(e.target.value)); setMessage(''); }}
-                    className="flex-1 cursor-pointer"
+                    className="flex-1 cursor-pointer accent-gray-400"
                   />
                   <input
                     type="number"
@@ -142,7 +155,7 @@ export default function SettingsPage() {
                     step="10"
                     value={goldThreshold}
                     onChange={(e) => { setGoldThreshold(Number(e.target.value)); setMessage(''); }}
-                    className="flex-1 cursor-pointer"
+                    className="flex-1 cursor-pointer accent-yellow-400"
                   />
                   <input
                     type="number"
@@ -181,6 +194,13 @@ export default function SettingsPage() {
 
           {/* Save Button */}
           <div className="pt-6 border-t border-text/10">
+            {hasUnsavedChanges && (
+              <div className="flex justify-end mb-3">
+                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  Unsaved changes
+                </span>
+              </div>
+            )}
             <button
               onClick={handleSave}
               disabled={saving}

@@ -17,6 +17,37 @@ interface LogEntry {
   oldTier: string | null;
   newTier: string | null;
   createdAt: string;
+  groupedCount?: number;
+}
+
+function groupCheckedEntries(entries: LogEntry[]): LogEntry[] {
+  const result: LogEntry[] = [];
+  let i = 0;
+  while (i < entries.length) {
+    const entry = entries[i];
+    if (entry.action === 'checked') {
+      const entryDate = new Date(entry.createdAt).toLocaleDateString();
+      let count = 1;
+      while (
+        i + count < entries.length &&
+        entries[i + count].action === 'checked' &&
+        new Date(entries[i + count].createdAt).toLocaleDateString() === entryDate
+      ) {
+        count++;
+      }
+      if (count > 1) {
+        result.push({ ...entry, groupedCount: count });
+        i += count;
+      } else {
+        result.push(entry);
+        i++;
+      }
+    } else {
+      result.push(entry);
+      i++;
+    }
+  }
+  return result;
 }
 
 const ACTION_OPTIONS = [
@@ -142,7 +173,7 @@ export default function ActivityLogPage() {
         page,
         limit,
       });
-      setLogs(data.logs || []);
+      setLogs(groupCheckedEntries(data.logs || []));
       setTotal(data.total || 0);
     } catch (err: any) {
       console.error('Error fetching activity log:', err);
@@ -227,9 +258,11 @@ export default function ActivityLogPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-wrap">
                       <span className="font-medium text-text">
-                        {getActionLabel(entry.action)}
+                        {entry.action === 'checked' && entry.groupedCount && entry.groupedCount > 1
+                          ? `Re-checked ${entry.groupedCount} members`
+                          : getActionLabel(entry.action)}
                       </span>
-                      {entry.memberUsername && (
+                      {!(entry.action === 'checked' && entry.groupedCount && entry.groupedCount > 1) && entry.memberUsername && (
                         <span className="text-sm font-mono text-primary">
                           @{entry.memberUsername}
                         </span>
@@ -238,11 +271,15 @@ export default function ActivityLogPage() {
                         by {entry.adminName}
                       </span>
                     </div>
-                    {formatDetails(entry) && (
+                    {entry.action === 'checked' && entry.groupedCount && entry.groupedCount > 1 ? (
+                      <p className="text-sm text-text/60 mt-1 font-mono">
+                        Score unchanged
+                      </p>
+                    ) : formatDetails(entry) ? (
                       <p className="text-sm text-text/60 mt-1 font-mono">
                         {formatDetails(entry)}
                       </p>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Timestamp */}

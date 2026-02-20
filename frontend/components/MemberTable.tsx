@@ -33,6 +33,8 @@ export default function MemberTable({ searchQuery, tierFilter }: MemberTableProp
         limit: itemsPerPage,
         search: searchQuery,
         tier: tierFilter === 'all' ? undefined : tierFilter,
+        sortBy: 'fairscore',
+        sortOrder: 'desc',
       });
       setMembers(data.members);
       setTotalPages(data.pagination.totalPages);
