@@ -1168,7 +1168,7 @@ app.use('/api/verify', verifyLimiter);
 import cors from 'cors';
 
 const ALLOWED_ORIGINS = [
-  'https://alpha-groups.vercel.app',
+  FRONTEND_URL,
   'http://localhost:3000'
 ];
 

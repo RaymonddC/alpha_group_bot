@@ -22,8 +22,7 @@ const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN;
 // CORS configuration
 const ALLOWED_ORIGINS = [
   FRONTEND_URL,
-  'http://localhost:3000',
-  'https://alpha-groups.vercel.app'
+  'http://localhost:3000'
 ];
 
 app.use(
