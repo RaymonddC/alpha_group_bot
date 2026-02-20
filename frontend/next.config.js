@@ -35,7 +35,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:* https://api.mainnet-beta.solana.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co http://localhost:* https://api.mainnet-beta.solana.com https://*.onrender.com",
               "frame-ancestors 'none'",
             ].join('; '),
           },

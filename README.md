@@ -12,8 +12,8 @@ Alpha Groups is a Telegram bot that automatically manages community access based
 
 | | |
 |---|---|
-| **App** | https://alpha-groups.vercel.app |
-| **Backend** | https://alpha-groups-backend.railway.app |
+| **App** | https://alpha-group-bot.vercel.app |
+| **Backend** | https://alpha-group-bot.onrender.com |
 | **Demo Video** | [YouTube / Loom link] |
 
 ---
