@@ -739,7 +739,11 @@ export { supabase };
 
 **Connection String Format:**
 ```
-postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:6543/postgres?pgbouncer=true
+# Session Pooler (persistent servers like Render) — port 5432
+postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+
+# Transaction Pooler (serverless/edge functions) — port 6543
+postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
 ---

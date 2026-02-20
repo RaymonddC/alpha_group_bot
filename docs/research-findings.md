@@ -758,7 +758,8 @@ const supabase = createClient(
 );
 
 // Connection string for Prisma/Drizzle
-// postgresql://postgres:password@db.project.supabase.co:6543/postgres?pgbouncer=true
+// Session Pooler (persistent servers): port 5432
+// postgresql://postgres.[project-ref]:password@aws-0-[region].pooler.supabase.com:5432/postgres
 ```
 
 **Pool Size Guidelines:**

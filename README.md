@@ -169,9 +169,7 @@ docker compose up -d
 
 **Backend** (`backend/.env`):
 ```env
-SUPABASE_URL=http://localhost:54321
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_KEY=your_service_key
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/alpha_groups
 
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_SECRET_TOKEN=any_random_32_char_string
@@ -221,9 +219,7 @@ NODE_ENV=production
 BACKEND_URL=https://your-app.railway.app   # Your Railway URL
 TELEGRAM_SECRET_TOKEN=<random 32 chars>
 
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_KEY=eyJ...
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
 
 TELEGRAM_BOT_TOKEN=your_bot_token
 FAIRSCALE_API_KEY=your_api_key
@@ -319,9 +315,9 @@ Content-Type: application/json
 | `TELEGRAM_BOT_TOKEN` | Yes | From @BotFather |
 | `TELEGRAM_SECRET_TOKEN` | Yes (prod) | Webhook security token |
 | `BACKEND_URL` | Yes (prod) | Public URL of this backend |
-| `SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Yes | Supabase anon key |
-| `SUPABASE_SERVICE_KEY` | Yes | Supabase service role key |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (covers all DB access) |
+| `SUPABASE_URL` | No | Optional fallback if not using DATABASE_URL |
+| `SUPABASE_SERVICE_KEY` | No | Optional fallback if not using DATABASE_URL |
 | `FAIRSCALE_API_KEY` | Yes | FairScale API key |
 | `FAIRSCALE_API_URL` | Yes | FairScale API base URL |
 | `REDIS_URL` | Yes | Redis connection URL |
