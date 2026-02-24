@@ -43,8 +43,9 @@ router.get('/health', async (_req, res) => {
 
     logger.info('Health check', response);
 
-    const statusCode = allHealthy ? 200 : 503;
-    res.status(statusCode).json(response);
+    // Always return 200 so uptime monitors (UptimeRobot) don't mark the
+    // server as "down" when a backing service is degraded but the API is alive.
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Health check error:', error);
 
@@ -59,7 +60,7 @@ router.get('/health', async (_req, res) => {
       version: '1.0.0'
     };
 
-    res.status(503).json(response);
+    res.status(200).json(response);
   }
 });
 
