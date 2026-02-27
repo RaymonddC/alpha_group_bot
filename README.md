@@ -4,8 +4,6 @@
 
 Alpha Groups is a Telegram bot that automatically manages community access based on members' FairScore — Solana's on-chain reputation metric (0–1000). Users verify their wallet via Sign In With Solana (SIWS), get scored, and receive tiered access. Admins control everything through a web dashboard.
 
-> Built for Fairathon 2026
-
 ---
 
 ## Live Demo
@@ -14,7 +12,7 @@ Alpha Groups is a Telegram bot that automatically manages community access based
 |---|---|
 | **App** | https://alpha-group-bot.vercel.app |
 | **Backend** | https://alpha-group-bot.onrender.com |
-| **Demo Video** | [YouTube / Loom link] |
+| **Demo Video** | https://youtu.be/Jk4RwAvHDdY |
 
 ---
 
@@ -95,7 +93,7 @@ GitHub Actions triggers POST /api/cron/recheck-members at 3AM UTC
        │ /start /verify          │ Connect wallet + sign
        ▼                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Express Backend (Railway)                        │
+│              Express Backend (Render)                         │
 │                                                               │
 │  /webhook ──► telegram-bot.ts ──► handlers.ts                │
 │  /api/verify ──► solana-verify.ts ──► fairscale.ts           │
@@ -151,8 +149,8 @@ GitHub Actions triggers POST /api/cron/recheck-members at 3AM UTC
 
 ### 1. Clone & install
 ```bash
-git clone https://github.com/fairscale/alpha-groups
-cd alpha-groups
+git clone https://github.com/RaymonddC/alpha_group_bot
+cd alpha_group_bot
 
 cd backend && npm install
 cd ../frontend && npm install
@@ -208,15 +206,15 @@ cd frontend && npm run dev
 
 ## Production Deployment
 
-### Backend (Railway)
+### Backend (Render)
 
-1. Connect your GitHub repo to [Railway](https://railway.app)
+1. Connect your GitHub repo to [Render](https://render.com)
 2. Set root directory to `backend/`
 3. Add environment variables:
 
 ```env
 NODE_ENV=production
-BACKEND_URL=https://your-app.railway.app   # Your Railway URL
+BACKEND_URL=https://your-app.onrender.com   # Your Render URL
 TELEGRAM_SECRET_TOKEN=<random 32 chars>
 
 DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
@@ -403,7 +401,7 @@ alpha-groups/
 
 | Name | Role | Contact |
 |------|------|---------|
-| [Your Name] | Full-stack Developer | [@handle] |
+| Raymond | Full-stack Developer | [@RaymonddC](https://github.com/RaymonddC) · [@AlphaGroupBot](https://x.com/AlphaGroupBot) |
 
 ---
 
