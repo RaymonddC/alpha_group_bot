@@ -25,15 +25,8 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/verify"
-              className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-cta text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 hover:translate-y-[-2px] shadow-lg"
-            >
-              <Shield className="mr-2 h-5 w-5" />
-              Get Started
-            </Link>
-            <Link
               href="/admin/login"
-              className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-transparent text-primary border-2 border-primary font-semibold rounded-lg hover:bg-primary/10 transition-all duration-200"
+              className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-cta text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 hover:translate-y-[-2px] shadow-lg"
             >
               Admin Dashboard
             </Link>
