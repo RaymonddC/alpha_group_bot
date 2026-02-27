@@ -1,6 +1,7 @@
 'use client';
 
-import { Shield, Users, TrendingUp, Zap } from 'lucide-react';
+import { Shield, TrendingUp, Zap } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -9,6 +10,9 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="px-6 py-20 md:py-32">
         <div className="max-w-6xl mx-auto text-center">
+          <div className="flex justify-center mb-8">
+            <Image src="/brand/logo.png" alt="Alpha Groups" width={200} height={200} priority />
+          </div>
           <h1 className="font-heading text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-cta bg-clip-text text-transparent">
             Alpha Groups
           </h1>
