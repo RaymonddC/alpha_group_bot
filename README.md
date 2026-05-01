@@ -76,7 +76,7 @@ GitHub Actions triggers POST /api/cron/recheck-members at 3AM UTC
 - **Tiered Access** — Three reputation tiers with admin-configurable thresholds
 - **Auto-Management** — Daily cron re-checks all members, kicks/promotes automatically
 - **Bot Commands** — `/start`, `/verify`, `/status`, `/help` in Telegram
-- **Admin Dashboard** — Members table, analytics charts, activity log, settings
+- **Admin Dashboard** — 7 pages covering overview, login, invite-token registration, member management, activity log, analytics charts, and tier-threshold settings
 - **Nonce Replay Protection** — Each SIWS message is single-use (stored in DB)
 - **Rate Limiting** — Global (100 req/15min), verify endpoint (10 req/hr)
 - **Security Headers** — CSP, X-Frame-Options, Referrer-Policy on all responses
@@ -136,7 +136,7 @@ GitHub Actions triggers POST /api/cron/recheck-members at 3AM UTC
 | Charts | Recharts |
 | Auth | JWT (7d expiry) + bcrypt |
 | CI/CD | GitHub Actions |
-| Hosting | Railway (backend) + Vercel (frontend) |
+| Hosting | Render (backend) + Vercel (frontend) |
 
 ---
 
@@ -242,7 +242,7 @@ vercel --prod
 
 Set environment variable:
 ```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend.railway.app
+NEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com
 ```
 
 ### Database Migrations (Supabase)
@@ -262,7 +262,7 @@ Add these secrets to your GitHub repository (`Settings → Secrets`):
 
 | Secret | Value |
 |--------|-------|
-| `BACKEND_URL` | `https://your-backend.railway.app` |
+| `BACKEND_URL` | `https://your-backend.onrender.com` |
 | `CRON_SECRET` | Same value as backend `CRON_SECRET` |
 
 The daily re-check runs at 3AM UTC automatically.
@@ -328,10 +328,12 @@ Content-Type: application/json
 
 ## Testing
 
+The backend has **14 test files** spanning unit, end-to-end, and integration tests.
+
 ```bash
 cd backend
 
-# Unit tests
+# Unit + e2e tests (no external services required)
 npm test
 
 # Integration tests (requires Docker services running)
@@ -341,12 +343,20 @@ npm run test:integration
 npx tsc --noEmit
 ```
 
-Test coverage includes:
-- SIWS signature verification + nonce replay prevention
-- FairScore circuit breaker (CLOSED → OPEN → HALF_OPEN)
-- Member-checker promotion/demotion/kick logic
-- Admin auth middleware (JWT validation)
-- All API route validation (Zod schemas)
+### Coverage map
+
+| Area | Test files |
+|------|-----------|
+| SIWS signature verification + nonce replay prevention | `solana-verify.test.ts`, `nonce-replay.integration.test.ts` |
+| FairScore circuit breaker (CLOSED → OPEN → HALF_OPEN) and Redis cache | `fairscale.test.ts`, `redis.test.ts` |
+| Member-checker promote / demote / kick logic | `member-checker.test.ts`, `member-checker.integration.test.ts` |
+| Admin auth middleware + JWT validation | `auth.test.ts`, `admin-auth.e2e.test.ts`, `admin-auth.integration.test.ts` |
+| Admin CRUD endpoints | `admin.test.ts`, `admin-crud.e2e.test.ts`, `admin-crud.integration.test.ts`, `admin-analytics.integration.test.ts` |
+| Verify endpoint flow (end-to-end) | `verify.e2e.test.ts`, `verify-flow.integration.test.ts` |
+| Cron registration / authorization | `cron-register.e2e.test.ts` |
+| Database chain consistency | `db-chain.integration.test.ts` |
+| Telegram bot handlers | `handlers.test.ts` |
+| Zod request validation | `validation.test.ts` |
 
 ---
 
