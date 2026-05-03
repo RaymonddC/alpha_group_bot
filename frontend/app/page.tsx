@@ -1,6 +1,6 @@
 'use client';
 
-import { Shield, TrendingUp, Zap } from 'lucide-react';
+import { Shield, TrendingUp, Zap, Send, PlayCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -23,13 +23,33 @@ export default function HomePage() {
             Automatically manage community access based on on-chain reputation using FairScale.
             Keep bots and low-quality members out, elevate signal over noise.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link
+              href="https://t.me/alphaGroupSol_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer inline-flex items-center justify-center gap-2 px-8 py-4 bg-cta text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 hover:translate-y-[-2px] shadow-lg"
+            >
+              <Send className="h-5 w-5" />
+              Try the Bot on Telegram
+            </Link>
             <Link
               href="/admin/login"
-              className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-cta text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 hover:translate-y-[-2px] shadow-lg"
+              className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-background border border-primary/40 text-text font-semibold rounded-lg hover:border-primary/60 hover:bg-primary/5 transition-all duration-200 hover:translate-y-[-2px]"
             >
               Admin Dashboard
             </Link>
+          </div>
+          <div className="mt-6">
+            <a
+              href="https://youtu.be/Jk4RwAvHDdY"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-text/70 hover:text-text transition-colors text-sm"
+            >
+              <PlayCircle className="h-4 w-4" />
+              Watch the demo
+            </a>
           </div>
         </div>
       </section>
