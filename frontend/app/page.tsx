@@ -41,7 +41,7 @@ export default function HomePage() {
             How It Works
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md cursor-pointer">
+            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
               <div className="w-12 h-12 bg-cta/20 rounded-lg flex items-center justify-center mb-4">
                 <Shield className="h-6 w-6 text-cta" />
               </div>
@@ -51,7 +51,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="bg-background/80 rounded-xl p-8 border border-secondary/20 hover:border-secondary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md cursor-pointer">
+            <div className="bg-background/80 rounded-xl p-8 border border-secondary/20 hover:border-secondary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
               <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
                 <TrendingUp className="h-6 w-6 text-secondary" />
               </div>
@@ -61,7 +61,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md cursor-pointer">
+            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
               <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
                 <Zap className="h-6 w-6 text-primary" />
               </div>
