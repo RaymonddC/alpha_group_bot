@@ -3,6 +3,8 @@
 import { Shield, TrendingUp, Zap, Send } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import FeatureCard from '@/components/FeatureCard';
+import TierCard from '@/components/TierCard';
 
 export default function HomePage() {
   return (
@@ -50,35 +52,27 @@ export default function HomePage() {
             How It Works
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
-              <div className="w-12 h-12 bg-cta/20 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="h-6 w-6 text-cta" />
-              </div>
-              <h3 className="font-heading text-xl font-semibold mb-3">Wallet Verification</h3>
-              <p className="text-text/70">
-                Users verify their Solana wallet via cryptographic signatures. No gas fees, completely free.
-              </p>
-            </div>
-
-            <div className="bg-background/80 rounded-xl p-8 border border-secondary/20 hover:border-secondary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
-              <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-secondary" />
-              </div>
-              <h3 className="font-heading text-xl font-semibold mb-3">FairScore Check</h3>
-              <p className="text-text/70">
-                We check their FairScore (0-1000) using FairScale's on-chain reputation system.
-              </p>
-            </div>
-
-            <div className="bg-background/80 rounded-xl p-8 border border-primary/20 hover:border-primary/40 transition-all duration-200 hover:translate-y-[-4px] shadow-md">
-              <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-heading text-xl font-semibold mb-3">Auto-Management</h3>
-              <p className="text-text/70">
-                Members are automatically promoted, demoted, or kicked based on reputation changes.
-              </p>
-            </div>
+            <FeatureCard
+              icon={<Shield className="h-6 w-6 text-cta" />}
+              title="Wallet Verification"
+              description="Users verify their Solana wallet via cryptographic signatures. No gas fees, completely free."
+              iconWrapperClass="bg-cta/20"
+              borderClass="border-primary/20 hover:border-primary/40"
+            />
+            <FeatureCard
+              icon={<TrendingUp className="h-6 w-6 text-secondary" />}
+              title="FairScore Check"
+              description="We check their FairScore (0-1000) using FairScale's on-chain reputation system."
+              iconWrapperClass="bg-secondary/20"
+              borderClass="border-secondary/20 hover:border-secondary/40"
+            />
+            <FeatureCard
+              icon={<Zap className="h-6 w-6 text-primary" />}
+              title="Auto-Management"
+              description="Members are automatically promoted, demoted, or kicked based on reputation changes."
+              iconWrapperClass="bg-primary/20"
+              borderClass="border-primary/20 hover:border-primary/40"
+            />
           </div>
         </div>
       </section>
@@ -86,27 +80,37 @@ export default function HomePage() {
       {/* Tiers Section */}
       <section className="px-6 py-16">
         <div className="max-w-6xl mx-auto">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-4">
             Tiered Access System
           </h2>
+          <p className="text-sm text-text/50 text-center mb-12">
+            Default thresholds — admins can adjust per group.
+          </p>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 rounded-xl p-6 border border-orange-600/30">
-              <h3 className="font-heading text-xl font-semibold mb-2 text-orange-400">Bronze Tier</h3>
-              <p className="text-4xl font-bold mb-2">300+</p>
-              <p className="text-text/60">Entry-level access for verified members</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-700/30 to-gray-600/20 rounded-xl p-6 border border-gray-400/30">
-              <h3 className="font-heading text-xl font-semibold mb-2 text-gray-300">Silver Tier</h3>
-              <p className="text-4xl font-bold mb-2">500+</p>
-              <p className="text-text/60">Trusted members with proven reputation</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-yellow-700/30 to-yellow-600/20 rounded-xl p-6 border border-yellow-400/30">
-              <h3 className="font-heading text-xl font-semibold mb-2 text-yellow-300">Gold Tier</h3>
-              <p className="text-4xl font-bold mb-2">700+</p>
-              <p className="text-text/60">Elite members with exceptional reputation</p>
-            </div>
+            <TierCard
+              name="Bronze Tier"
+              threshold={300}
+              description="Entry-level access for verified members"
+              gradientClass="from-orange-900/30 to-orange-800/20"
+              borderClass="border-orange-600/30 hover:border-orange-400/50"
+              nameColor="text-orange-400"
+            />
+            <TierCard
+              name="Silver Tier"
+              threshold={500}
+              description="Trusted members with proven reputation"
+              gradientClass="from-gray-700/30 to-gray-600/20"
+              borderClass="border-gray-400/30 hover:border-gray-300/50"
+              nameColor="text-gray-300"
+            />
+            <TierCard
+              name="Gold Tier"
+              threshold={700}
+              description="Elite members with exceptional reputation"
+              gradientClass="from-yellow-700/30 to-yellow-600/20"
+              borderClass="border-yellow-400/30 hover:border-yellow-300/50"
+              nameColor="text-yellow-300"
+            />
           </div>
         </div>
       </section>
@@ -115,7 +119,15 @@ export default function HomePage() {
       <footer className="px-6 py-12 border-t border-text/10">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-text/60">
-            Built with <span className="text-primary">FairScale</span> for the Fairathon 2026
+            Built with <span className="text-primary">FairScale</span> for the{' '}
+            <a
+              href="https://superteam.fun/earn/listing/fairathon"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Fairathon 2026
+            </a>
           </p>
         </div>
       </footer>
