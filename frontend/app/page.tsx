@@ -1,6 +1,6 @@
 'use client';
 
-import { Shield, TrendingUp, Zap, Send, PlayCircle } from 'lucide-react';
+import { Shield, TrendingUp, Zap, Send } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -39,17 +39,6 @@ export default function HomePage() {
             >
               Admin Dashboard
             </Link>
-          </div>
-          <div className="mt-6">
-            <a
-              href="https://youtu.be/Jk4RwAvHDdY"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-text/70 hover:text-text transition-colors text-sm"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Watch the demo
-            </a>
           </div>
         </div>
       </section>
